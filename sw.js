@@ -1,5 +1,5 @@
 // Resposta Afiada — service worker
-const SHELL = 'afiada-shell-v1';
+const SHELL = 'afiada-shell-v3';
 const ARQS = ['./', './index.html', './manifest.webmanifest', './icon-192.png', './icon-512.png'];
 
 self.addEventListener('install', e => {
@@ -44,7 +44,7 @@ self.addEventListener('fetch', e => {
 
   // Rede primeiro, cache se estiver sem internet
   e.respondWith(
-    fetch(e.request)
+    fetch(e.request, { cache: 'no-cache' })
       .then(r => { const copia = r.clone(); caches.open(SHELL).then(c => c.put(e.request, copia)); return r; })
       .catch(() => caches.match(e.request).then(r => r || caches.match('./index.html')))
   );

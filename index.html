@@ -137,6 +137,7 @@ footer{color:var(--mute);font-size:13px;margin-top:24px}
     <button type="button" id="fecharConfig">Fechar</button>
   </div>
   <p class="hint" id="testeConfig"></p>
+  <p class="hint">Versão 3</p>
 </dialog>
 
 <script>
@@ -379,7 +380,7 @@ gerar.addEventListener('click', () => roda(false));
 /* ---------- Instalar ---------- */
 window.addEventListener('beforeinstallprompt', e => { e.preventDefault(); instalarEvt = e; $('instalar').hidden = false; });
 $('btnInstalar').addEventListener('click', async () => { if (!instalarEvt) return; instalarEvt.prompt(); await instalarEvt.userChoice; instalarEvt = null; $('instalar').hidden = true; });
-if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').then(() => navigator.serviceWorker.ready).then(pegaCompartilhado).catch(pegaCompartilhado);
+if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js', { updateViaCache: 'none' }).then(() => navigator.serviceWorker.ready).then(pegaCompartilhado).catch(pegaCompartilhado);
 else pegaCompartilhado();
 }
 </script>
