@@ -67,6 +67,7 @@ details.mais[open] summary::before{content:'–'}
 #modos .chip{justify-content:center;font-size:14px;padding:0 6px;min-height:50px;text-align:center}
 .estrela{border:0;min-height:36px;width:36px;padding:0;justify-content:center;font-size:20px}
 .cuidado{font-size:14px}
+.base{border-style:dashed}.bitem{margin:6px 0;font-size:15px;line-height:1.45}.bitem a{color:var(--red);word-break:break-word}
 .err{color:var(--red);font-weight:600}
 .wait{color:var(--mute)}
 .skel{height:120px;border-radius:10px;background:linear-gradient(90deg,var(--soft),transparent,var(--soft));background-size:200% 100%;margin-bottom:12px}
@@ -141,6 +142,8 @@ footer{color:var(--mute);font-size:13px;margin-top:20px}
         <button type="button" class="chip" data-v="equilibrado">Equilibrado</button>
         <button type="button" class="chip" data-v="duro">Firme e duro</button>
       </div>
+      <label class="check"><input type="checkbox" id="optWeb"> 🔎 Pesquisar na web para embasar</label>
+      <label class="check"><input type="checkbox" id="optHist"> 👤 Usar minha história pessoal</label>
       <label for="posicao" id="rotPosicao" class="hint" style="display:block;margin-top:14px;font-weight:700">Sua opinião (opcional)</label>
       <textarea id="posicao" rows="3" placeholder="Deixe vazio para receber 3 caminhos: concordar, discordar e meio-termo."></textarea>
       <div class="row" style="margin-top:6px"><button type="button" id="mic">🎙 Falar</button><span class="hint" id="micStatus" style="margin:0"></span></div>
@@ -163,7 +166,7 @@ footer{color:var(--mute);font-size:13px;margin-top:20px}
   <p class="hint" style="margin-top:6px">Pegue em <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">aistudio.google.com/apikey</a> → copiar.</p>
   <label for="dna">Meu jeito de escrever</label>
   <p class="hint">Cole 3 a 6 mensagens que você mesmo escreveu (do WhatsApp, posts). O app copia o seu jeito.</p>
-  <textarea id="dna" rows="5" placeholder="Ex.: Bom dia, pessoal! Quem trabalha na roça sabe…"></textarea>
+  <textarea id="dna" rows="5" placeholder="Ex.: Bom dia, pessoal! Vou ser direto…"></textarea>
   <label class="check"><input type="checkbox" id="auto"> Gerar resposta sozinho ao compartilhar</label>
   <label for="modelo">Modelo (só mexa se der erro)</label>
   <input type="text" id="modelo" autocomplete="off">
@@ -172,7 +175,7 @@ footer{color:var(--mute);font-size:13px;margin-top:20px}
     <button type="button" id="fecharConfig">Fechar</button>
   </div>
   <p class="hint" id="testeConfig"></p>
-  <p class="hint">Versão 5.2</p>
+  <p class="hint">Versão 5.3</p>
 </dialog>
 
 <dialog id="hist">
@@ -211,13 +214,13 @@ const PLATEIAS = {
   juridico: { nome: 'Jurídico', estilo: 'juridico', tom: 'respeitoso',
     regra: 'Assunto jurídico ou de cobrança (banco, escola, seguradora, cliente, fornecedor, órgão público, notificação, reclamação). Objetivo: deixar registrado por escrito o direito do Neiron, de forma que sirva de prova depois, sem confissão e sem frase que possa ser usada contra ele. No campo "cuidado", lembre de conferir com o advogado dele antes de enviar documento formal.' },
   amigos: { nome: 'Dia a dia', estilo: 'humor', tom: 'equilibrado',
-    regra: 'Conversa do dia a dia com amigos e conhecidos. Natural, leve, bem-humorada, com jeito de conversa de interior. Curta.' }
+    regra: 'Conversa do dia a dia com amigos e conhecidos. Natural, leve, bem-humorada. Curta.' }
 };
 const ESTILOS = [
   { id: 'auto', nome: 'Automático (o app escolhe)', desc: 'O app escolhe a melhor técnica para cada caminho. Em política, dá preferência à metáfora com ironia.',
     regra: 'Escolha para cada versão a técnica de retórica que mais convence a maioria nesse caso (metáfora com ironia, perguntas que desmontam, ditado popular, contraste, história, concessão e virada, regra de três etc.). Use técnicas diferentes entre as versões. Em grupo político, prefira a metáfora estendida com ironia em pelo menos uma versão.' },
 { id: 'metafora', nome: 'Metáfora com ironia', desc: 'Falso elogio + imagem do dia a dia + o alvo falando entre aspas. Ex.: "quebra suas pernas para te dar uma muleta".',
-    regra: 'Metáfora estendida com ironia (alegoria irônica): 1) falso elogio de abertura ("X é ótimo em uma coisa…"); 2) uma imagem física do dia a dia (roça, estrada, oficina, caminhão, família, café) que traduz o problema; 3) personificação: o alvo ganha voz; 4) fecho com a fala do alvo entre aspas mostrando a arrogância. Molde: "O governo é muito bom em uma coisa: ele quebra suas pernas para te dar uma muleta e diz: viu? Sem nossa ajuda você não andaria".' },
+    regra: 'Metáfora estendida com ironia (alegoria irônica): 1) falso elogio de abertura ("X é ótimo em uma coisa…"); 2) uma imagem física e concreta tirada do PRÓPRIO ASSUNTO da conversa (nunca uma imagem genérica repetida) que traduz o problema; 3) personificação: o alvo ganha voz; 4) fecho com a fala do alvo entre aspas mostrando a arrogância. Molde: "O governo é muito bom em uma coisa: ele quebra suas pernas para te dar uma muleta e diz: viu? Sem nossa ajuda você não andaria".' },
   { id: 'formal', nome: 'Formal e institucional', desc: 'Linguagem de ofício e nota pública. Educado, firme nos fatos, sem ironia.',
     regra: 'Resposta formal e institucional, como nota pública ou carta a uma autoridade: cumprimento cordial, reconhecimento do ponto do outro, exposição clara da posição com fatos do material, pedido ou proposta concreta, fecho respeitoso. Sem ironia, sem gíria.' },
   { id: 'perguntas', nome: 'Perguntas que desmontam', desc: 'Três ou quatro perguntas em sequência que deixam o outro sem saída.',
@@ -225,13 +228,13 @@ const ESTILOS = [
   { id: 'contraste', nome: 'Contraste "eles × nós"', desc: 'Frases em espelho: enquanto eles fazem isso, nós fazemos aquilo.',
     regra: 'Antítese e paralelismo: frases em espelho contrapondo o que o outro lado faz e o que o Neiron defende ("Enquanto uns…, outros…"; "Eles prometem…, nós entregamos…"). Ritmo marcado, de comício.' },
   { id: 'historia', nome: 'História pessoal', desc: 'Começa com uma vivência sua, traz um exemplo real e fecha com emoção.',
-    regra: 'Storytelling: abra com uma cena ou vivência pessoal do Neiron, use só o que estiver no posicionamento dele (não invente passagens da vida dele; se não houver, use a experiência de quem vive no interior, sem dizer que aconteceu com ele), ligue a um exemplo real do assunto e feche com emoção e uma frase de efeito.' },
+    regra: 'Storytelling: abra com uma cena real e concreta ligada ao assunto (um caso verídico encontrado na pesquisa ou uma situação que qualquer pessoa reconhece; só use vivência do Neiron se ele mesmo contar no campo de opinião), ligue a um exemplo real do assunto e feche com emoção e uma frase de efeito.' },
   { id: 'dados', nome: 'Fatos e números', desc: 'Resposta seca, com os dados do próprio material. Sem adjetivo sobrando.',
     regra: 'Resposta baseada em fatos: liste de forma clara os fatos e números que estão no material (nunca invente números; se não houver, diga o que precisaria ser verificado), compare o prometido com o entregue e conclua com uma frase objetiva.' },
   { id: 'humor', nome: 'Bom humor', desc: 'Leve, engraçado, faz o povo rir sem ofender ninguém.',
     regra: 'Humor leve e popular: exagero cômico, situação engraçada do cotidiano, piada que qualquer um entende. Sem deboche de pessoa, sem palavrão. O riso tem que reforçar o argumento.' },
-  { id: 'ditado', nome: 'Ditado popular', desc: 'Usa um provérbio conhecido ou sabedoria da roça para fechar a questão.',
-    regra: 'Construa a resposta em torno de um ditado popular brasileiro conhecido ou sabedoria da roça (ex.: "quem planta vento colhe tempestade", "não adianta pôr tranca depois da porta arrombada"). Mostre como o ditado se aplica ao caso e feche com ele.' },
+  { id: 'ditado', nome: 'Ditado popular', desc: 'Usa um provérbio conhecido para fechar a questão.',
+    regra: 'Construa a resposta em torno de um ditado popular brasileiro conhecido que combine com o assunto (ex.: "quem planta vento colhe tempestade", "não adianta pôr tranca depois da porta arrombada"). Mostre como o ditado se aplica ao caso e feche com ele.' },
   { id: 'absurdo', nome: 'Levar ao absurdo', desc: 'Pega a lógica do outro e estica até ficar ridícula.',
     regra: 'Redução ao absurdo: aceite a lógica do outro lado por um momento e leve-a às últimas consequências até ficar evidentemente absurda ("Se é assim, então amanhã…"). Volte ao bom senso no fecho.' },
   { id: 'concordo', nome: 'Concordo, mas…', desc: 'Concede um ponto ao outro e depois vira o jogo.',
@@ -245,7 +248,7 @@ const ESTILOS = [
   { id: 'denuncia', nome: 'Denúncia firme', desc: 'Tom de tribuna: indignação, cobrança e responsabilidade.',
     regra: 'Denúncia de tribuna: indignação controlada, cobrança direta de responsabilidade sobre a prática concreta, frases curtas e fortes, chamado à ação no fim. Sem ofensa pessoal e sem acusação que não esteja no material.' },
   { id: 'analogia', nome: 'Comparação simples', desc: 'Explica com uma comparação do dia a dia, sem ironia.',
-    regra: 'Analogia simples e sem ironia: compare o caso com algo do dia a dia (cuidar da lavoura, consertar caminhão, administrar a casa) para o povo entender na hora. Clareza acima de tudo.' },
+    regra: 'Analogia simples e sem ironia: compare o caso com algo do dia a dia que combine com o assunto (escolha uma comparação nova a cada vez) para o povo entender na hora. Clareza acima de tudo.' },
   { id: 'didatico', nome: 'Explica para o povo', desc: 'Passo a passo simples: o que aconteceu, por que importa, o que fazer.',
     regra: 'Didático: explique em linguagem bem simples em três partes: o que aconteceu, por que isso importa na vida das pessoas e o que deveria ser feito. Sem palavras difíceis.' },
   { id: 'inversao', nome: 'E se fosse ao contrário?', desc: 'Troca os papéis para mostrar o dois pesos, duas medidas.',
@@ -321,6 +324,10 @@ $('selVoz').addEventListener('change', e => { voz = e.target.value; ls.set('af_v
 document.querySelectorAll('#tons .chip').forEach(b => b.addEventListener('click', () => { tom = b.dataset.v; ls.set('af_tom5', tom); pintaOpcoes(); }));
 pintaOpcoes();
 pintaModo();
+$('optWeb').checked = ls.get('af_web') !== 'nao';
+$('optHist').checked = ls.get('af_historia') === 'sim';
+$('optWeb').addEventListener('change', e => ls.set('af_web', e.target.checked ? 'sim' : 'nao'));
+$('optHist').addEventListener('change', e => ls.set('af_historia', e.target.checked ? 'sim' : 'nao'));
 
 /* ================= Configurações ================= */
 const chave = () => ls.get('af_chave').trim();
@@ -344,30 +351,33 @@ $('salvarConfig').addEventListener('click', async () => {
 checaChave();
 
 /* ================= Gemini ================= */
-async function gemini(parts, json, temp) {
+let ultimasFontes = [];
+async function gemini(parts, json, temp, busca) {
   if (!chave()) { abrirConfig(); throw new Error('Coloque a chave do Gemini.'); }
   const tentar = [modelo(), ...RESERVAS.filter(m => m !== modelo())];
   let ultimoErro = null;
   for (const m of tentar) {
-    const cfg = json ? { responseMimeType: 'application/json', temperature: temp ?? 0.9 } : { temperature: temp ?? 0.2 };
+    const cfg = json && !busca ? { responseMimeType: 'application/json', temperature: temp ?? 0.9 } : { temperature: temp ?? (json ? 0.9 : 0.2) };
     if (/^gemini-2\.5-flash/.test(m)) cfg.thinkingConfig = { thinkingBudget: 0 };
     let r, d;
     try {
       r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${m}:generateContent`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'x-goog-api-key': chave() },
-        body: JSON.stringify({ contents: [{ role: 'user', parts }], generationConfig: cfg })
+        body: JSON.stringify(Object.assign({ contents: [{ role: 'user', parts }], generationConfig: cfg }, busca ? { tools: [{ google_search: {} }] } : {}))
       });
       d = await r.json().catch(() => ({}));
     } catch (e) { throw new Error('Sem internet ou conexão fraca.'); }
     if (r.ok) {
       if (m !== modelo()) ls.set('af_modelo', m);
       const txt = (d.candidates?.[0]?.content?.parts || []).map(p => p.text || '').join('');
+      const gm = d.candidates?.[0]?.groundingMetadata;
+      ultimasFontes = (gm?.groundingChunks || []).map(c => c.web).filter(Boolean).map(w => ({ titulo: w.title || w.uri, url: w.uri })).filter((f, i, a) => a.findIndex(x => x.titulo === f.titulo) === i).slice(0, 6);
       if (!txt) throw new Error('O Gemini não devolveu texto. Tente de novo.');
       return txt;
     }
     ultimoErro = d.error?.message || ('HTTP ' + r.status);
-    if (r.status === 404 || r.status === 500 || r.status === 503 || /not found|not supported|high demand|overloaded|unavailable|try again|thinking/i.test(ultimoErro)) continue;
+    if (r.status === 404 || r.status === 500 || r.status === 503 || /not found|not supported|high demand|overloaded|unavailable|try again|thinking|google_search|tool/i.test(ultimoErro)) continue;
     if (r.status === 429) throw new Error('Limite do Gemini atingido. Espere um minuto.');
     if (r.status === 400 && /api key/i.test(ultimoErro)) throw new Error('Chave do Gemini inválida.');
     throw new Error(ultimoErro);
@@ -544,8 +554,13 @@ $('mic').addEventListener('click', () => {
 });
 
 /* ================= Cérebro: o pedido ao Gemini ================= */
-const PERFIL = `SOBRE O USUÁRIO (Neiron Costa): 50 anos, empresário capixaba (logística e socorro automotivo desde 2005, a NF da Costa), produtor de café arábica no Caparaó, criado na roça em Minas Gerais, ex-vereador em Lajinha/MG, ativo na política do Espírito Santo e de Lajinha. Fala o português do povo, direto, sem palavra difícil. Gosta de frases curtas, ritmo de fala, imagem do dia a dia (roça, café, estrada, caminhão, oficina, família) e de história pessoal com emoção. Use dados da vida dele só quando ajudarem e nunca invente passagens da vida dele.`;
+const PERFIL_NEUTRO = `QUEM RESPONDE: o usuário deste app, Neiron. Escreve em primeira pessoa, português do povo, direto, frases curtas. NÃO mencione a profissão, a cidade, a lavoura, o café, a roça nem a história de vida dele, a não ser que ele mesmo traga isso no campo de opinião.`;
+const PERFIL_HISTORIA = `QUEM RESPONDE: o usuário deste app, Neiron Costa, 50 anos, empresário capixaba (logística e socorro automotivo desde 2005), produtor de café no Caparaó, criado na roça em Minas Gerais, ex-vereador em Lajinha/MG. Ele PEDIU para usar a história dele nesta resposta: use UM elemento da vida dele que combine com o assunto, sem inventar passagens.`;
+const perfil = () => ls.get('af_historia') === 'sim' ? PERFIL_HISTORIA : PERFIL_NEUTRO;
 
+function ultimasImagens() {
+  return lerHist().slice(0, 6).flatMap(x => (x.versoes || []).map(v => v.tecnica)).filter(Boolean).slice(0, 12).join('; ');
+}
 function blocoMaterial() {
   const txts = anexos.filter(a => a.tipo === 'txt').map(a => `--- ${a.nome} ---\n${a.texto}`).join('\n\n');
   return `${chegou.value.trim() || '(o conteúdo está nos anexos)'}${txts ? '\n\nCONVERSA EXPORTADA DO WHATSAPP:\n' + txts : ''}${anexos.some(a => a.tipo === 'img') ? '\n\n(Há prints anexados; leia-os.)' : ''}`;
@@ -579,7 +594,7 @@ ${blocoMaterial()}
 
 QUEM É QUEM (obrigatório, leia duas vezes):
 - Quem fala no material acima é ${autor}. O Neiron NÃO é o autor desse material e NÃO é a voz do áudio ou do vídeo.
-- Mesmo que o assunto combine com a vida do Neiron (estrada, caminhão, oficina, café, política, Lajinha), o material continua sendo de ${autor}. Não deduza que é do Neiron por causa do assunto.
+- Mesmo que o assunto pareça ligado ao Neiron, o material continua sendo de ${autor}. Não deduza que é do Neiron por causa do assunto.
 - Se o nome "Neiron" aparecer no material, é ${autor} falando COM o Neiron ou SOBRE ele.
 - As respostas são do Neiron, em primeira pessoa, PARA ${quem || 'essa pessoa'} (ou comentando no grupo o que ela disse).${extra ? `\n\nOPINIÃO DO NEIRON SOBRE O ASSUNTO (siga essa linha):\n${extra}` : ''}`;
 
@@ -600,7 +615,7 @@ QUEM É QUEM (obrigatório, leia duas vezes):
 ${cabeca}
 
 ------------------------------
-${PERFIL}
+${perfil()}
 ${dna ? `\nJEITO DE ESCREVER DO NEIRON (imite vocabulário, ritmo, saudações e pontuação destes exemplos, sem copiar frases):\n"""${dna}"""\n` : ''}
 GRUPO / PLATEIA: ${pl.nome}. ${pl.regra}
 
@@ -608,8 +623,14 @@ ESTILO: ${e.nome}. ${e.regra}
 ${v && v.id ? `\nNA VOZ DE: ${v.regra} Imite o ESTILO e o modo de pensar, em português simples. NÃO invente frases e não atribua a essa pessoa nada que ela não disse. Só cite uma frase real e muito conhecida se tiver certeza absoluta da autoria; na dúvida, não cite.\n` : ''}
 TOM: ${TONS[tom]}
 
+${ls.get('af_web') !== 'nao' ? `PESQUISA: antes de escrever, pesquise na web (Google) o assunto da conversa: fatos atuais, números oficiais, notícias recentes, o que diz a lei e o que especialistas dizem. Use o que encontrar para dar SOLIDEZ às respostas. Prefira fontes oficiais e jornais conhecidos. Se a pesquisa não confirmar algo, não afirme.
+
+` : ''}EMBASAMENTO: além das respostas, monte um kit de munição sobre o assunto, com 3 a 5 itens variados escolhidos entre: "Fato do momento" (dado ou notícia atual verificada), "Ângulo jurídico" (o que a lei diz, só se for pertinente e real), "Analogia" (comparação nova ligada ao assunto), "Pensador" (um pensador, jurista, economista ou líder que tem uma ideia útil aqui, inclusive um CONTRAPONTO à ideia do outro lado; só ideia real, citação só se tiver certeza), "Contra-argumento" (o que o outro lado pode rebater e como responder).
+
+VARIEDADE: cada resposta tem que nascer do assunto específico da conversa. Não use imagens prontas, não repita comparações. ${ultimasImagens() ? `Evite estas imagens e técnicas usadas recentemente: ${ultimasImagens()}.` : ''}
+
 REGRAS DE OURO:
-- Nunca invente fatos, números, nomes, datas, citações ou acusações. Use só o que está no material. Se faltar dado, argumente com lógica e valores.
+- Nunca invente fatos, números, nomes, datas, citações ou acusações. Use o material e o que a pesquisa confirmar. Se faltar dado, argumente com lógica e valores.
 - Citações e versículos só se forem reais e com autor/referência corretos.
 - Sem ataque pessoal, xingamento, preconceito ou ofensa à família de ninguém. A crítica mira a prática, não a pessoa.
 - Português do Brasil, frases curtas, pronto para colar no WhatsApp. No máximo 1 emoji por versão, e só se combinar com o grupo.
@@ -620,7 +641,7 @@ ${caminhos}
 ${termo}
 
 Responda SOMENTE com JSON:
-{"entendi":"${entendi}","termometro":{"veredito":"responder|privado|nao","motivo":"...","maioria":"..."},"versoes":[{"rotulo":"...","tecnica":"técnica usada em poucas palavras","texto":"..."},{"rotulo":"...","tecnica":"...","texto":"..."},{"rotulo":"...","tecnica":"...","texto":"..."}],"cuidado":"1 frase: o ponto fraco que alguém pode usar contra essas respostas","conceito":"${plateia === 'politica' ? 'conceito de Os Engenheiros do Caos usado ou relevante, em poucas palavras' : ''}"}`;
+{"entendi":"${entendi}","termometro":{"veredito":"responder|privado|nao","motivo":"...","maioria":"..."},"versoes":[{"rotulo":"...","tecnica":"técnica usada em poucas palavras","texto":"..."},{"rotulo":"...","tecnica":"...","texto":"..."},{"rotulo":"...","tecnica":"...","texto":"..."}],"embasamento":[{"tipo":"Fato do momento|Ângulo jurídico|Analogia|Pensador|Contra-argumento","texto":"1 a 3 frases"}],"cuidado":"1 frase: o ponto fraco que alguém pode usar contra essas respostas","conceito":"${plateia === 'politica' ? 'conceito de Os Engenheiros do Caos usado ou relevante, em poucas palavras' : ''}"}`;
 }
 
 /* ================= Gerar ================= */
@@ -634,8 +655,11 @@ async function roda(outra) {
   try {
     const parts = [{ text: montaPedido({ outra: outra ? (ultimo?.versoes || []).map(v => v.tecnica).join('; ') : '' }) }];
     for (const a of anexos.filter(a => a.tipo === 'img')) parts.push({ inline_data: { mime_type: a.blob.type || 'image/jpeg', data: await paraBase64(a.blob) } });
-    const txt = await gemini(parts, true);
+    const busca = ls.get('af_web') !== 'nao';
+    if (busca) $('saida').querySelector('.wait').textContent = 'Pesquisando o assunto na web e escrevendo…';
+    const txt = await gemini(parts, true, undefined, busca);
     const r = JSON.parse(txt.slice(txt.indexOf('{'), txt.lastIndexOf('}') + 1));
+    r.fontes = busca ? ultimasFontes : [];
     r.id = Date.now(); r.plateia = plateia; r.quem = $('quem').value.trim(); r.modo = modo; r.entrada = chegou.value.trim().slice(0, 300); r.fav = false;
     ultimo = r; guardaHist(r); desenha(r);
   } catch (e) {
@@ -658,6 +682,7 @@ function desenha(r) {
       <div class="row"><button type="button" data-acao="copiar">Copiar</button><a class="btn wa" data-acao="wa" href="https://wa.me/?text=${encodeURIComponent(v.texto)}" target="_blank" rel="noopener">WhatsApp</a></div>
       <div class="row ajustes"><button type="button" data-aj="curta">Mais curta</button><button type="button" data-aj="firme">Mais firme</button><button type="button" data-aj="educada">Mais educada</button><button type="button" data-aj="humor">Com humor</button><button type="button" data-aj="voz">Mais meu jeito</button></div>
     </div>`).join('') +
+    (Array.isArray(r.embasamento) && r.embasamento.length ? `<div class="card base"><div class="top"><h3>Embasamento</h3></div>${r.embasamento.map(b => `<p class="bitem"><b>${esc(b.tipo)}:</b> ${esc(b.texto)}</p>`).join('')}${(r.fontes || []).length ? `<p class="tec" style="margin-top:10px">Fontes:</p>${r.fontes.map(f => `<p class="bitem"><a href="${esc(f.url)}" target="_blank" rel="noopener">${esc(f.titulo)}</a></p>`).join('')}` : ''}</div>` : '') +
     (r.cuidado ? `<div class="note cuidado"><b>Cuidado:</b> ${esc(r.cuidado)}</div>` : '') +
     (r.conceito ? `<div class="note cuidado" style="border-color:var(--ink)"><b>Engenheiros do Caos:</b> ${esc(r.conceito)}</div>` : '') +
     `<div class="row"><button type="button" id="outra">↻ Outras versões</button></div>`;
@@ -669,7 +694,7 @@ const AJUSTES = {
   firme: 'Deixe mais firme e direta, sem perder a educação.',
   educada: 'Deixe mais educada e respeitosa, sem perder o argumento.',
   humor: 'Acrescente humor leve e inteligente, sem ofender ninguém.',
-  voz: 'Reescreva mais no jeito do Neiron: português do povo, frases curtas, imagem da roça/estrada/café, natural de WhatsApp.'
+  voz: 'Reescreva mais no jeito do Neiron: português do povo, frases curtas, direto, natural de WhatsApp.'
 };
 saida.addEventListener('click', async e => {
   const card = e.target.closest('.card'); if (!card || !ultimo) return;
@@ -685,7 +710,7 @@ saida.addEventListener('click', async e => {
   const btn = e.target, antes = btn.textContent; btn.textContent = '…'; btn.disabled = true;
   try {
     const dna = ls.get('af_dna');
-    const novo = await gemini([{ text: `${PERFIL}\n${dna && aj === 'voz' ? `Exemplos de como o Neiron escreve:\n"""${dna}"""\n` : ''}\nContexto do grupo: ${PLATEIAS[ultimo.plateia || plateia].nome}.\n${ultimo.modo === 'revisar' ? 'O texto abaixo é uma resposta do próprio Neiron.' : `Mensagem que ${ultimo.quem || 'outra pessoa'} mandou para o Neiron (o Neiron NÃO é o autor dela): ${ultimo.entrada}. A resposta abaixo é do Neiron para essa pessoa.`}\n\nTexto atual da resposta:\n"""${v.texto}"""\n\nAJUSTE: ${AJUSTES[aj]}\nNão invente fatos nem citações. Responda só com o novo texto, pronto para colar no WhatsApp.` }], false, 0.8);
+    const novo = await gemini([{ text: `${perfil()}\n${dna && aj === 'voz' ? `Exemplos de como o Neiron escreve:\n"""${dna}"""\n` : ''}\nContexto do grupo: ${PLATEIAS[ultimo.plateia || plateia].nome}.\n${ultimo.modo === 'revisar' ? 'O texto abaixo é uma resposta do próprio Neiron.' : `Mensagem que ${ultimo.quem || 'outra pessoa'} mandou para o Neiron (o Neiron NÃO é o autor dela): ${ultimo.entrada}. A resposta abaixo é do Neiron para essa pessoa.`}\n\nTexto atual da resposta:\n"""${v.texto}"""\n\nAJUSTE: ${AJUSTES[aj]}\nNão invente fatos nem citações. Responda só com o novo texto, pronto para colar no WhatsApp.` }], false, 0.8);
     v.texto = novo.trim().replace(/^"+|"+$/g, '');
     card.querySelector('.txt').textContent = v.texto;
     card.querySelector('[data-acao=wa]').href = 'https://wa.me/?text=' + encodeURIComponent(v.texto);
@@ -698,7 +723,7 @@ saida.addEventListener('click', async e => {
 function lerHist() { try { return JSON.parse(ls.get('af_hist') || '[]'); } catch (e) { return []; } }
 function guardaHist(r) {
   let h = lerHist().filter(x => x.id !== r.id);
-  h.unshift({ id: r.id, plateia: r.plateia, quem: r.quem, modo: r.modo, entrada: r.entrada, entendi: r.entendi, versoes: r.versoes, termometro: r.termometro, cuidado: r.cuidado, conceito: r.conceito });
+  h.unshift({ id: r.id, plateia: r.plateia, quem: r.quem, modo: r.modo, embasamento: r.embasamento, fontes: r.fontes, entrada: r.entrada, entendi: r.entendi, versoes: r.versoes, termometro: r.termometro, cuidado: r.cuidado, conceito: r.conceito });
   const favs = h.filter(x => x.versoes?.some(v => v.fav)), resto = h.filter(x => !x.versoes?.some(v => v.fav)).slice(0, 40);
   h = [...favs, ...resto].sort((a, b) => b.id - a.id);
   ls.set('af_hist', JSON.stringify(h));
