@@ -32,6 +32,11 @@ button,.btn,a.btn{font:700 15px Archivo,system-ui,sans-serif;min-height:44px;pad
 .go{background:var(--red);border-color:var(--red);color:#fff;font-size:18px;min-height:56px;width:100%;justify-content:center;font-stretch:112%;font-weight:800}
 .go:disabled{opacity:.5}
 .chip[aria-pressed=true]{background:var(--ink);color:var(--bg)}
+.estilos{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(140px,45%),1fr));gap:8px;margin-top:10px}
+.estilos button{min-height:48px;font-size:13.5px;justify-content:flex-start;text-align:left;font-size:14px;line-height:1.2;padding:8px 12px}
+.estilos button[aria-pressed=true]{background:var(--red);border-color:var(--red);color:#fff}
+.descEstilo{background:var(--soft);border-radius:6px;padding:10px 12px;font-size:14px;margin-top:10px}
+.descEstilo b{color:var(--red)}
 .mic.on{background:var(--red);border-color:var(--red);color:#fff}
 .wa{background:#25d366;border-color:#25d366;color:#fff}
 .icon{width:44px;padding:0;justify-content:center;font-size:20px}
@@ -65,7 +70,7 @@ footer{color:var(--mute);font-size:13px;margin-top:24px}
     <h1>Resposta <b>afiada</b></h1>
     <button type="button" class="icon" id="abrirConfig" aria-label="Configurações">⚙</button>
   </header>
-  <p class="lead">No WhatsApp: segure o áudio ou a mensagem → Compartilhar → <b>Afiada</b>.</p>
+  <p class="lead">No WhatsApp ou Instagram: segure o áudio, vídeo ou mensagem → Compartilhar → <b>Afiada</b>.</p>
 
   <div class="note" id="semChave" hidden>Falta a chave do Gemini. <button type="button" id="abrirConfig2">Colocar chave</button></div>
   <div class="note" id="instalar" hidden>Instale o app para ele aparecer no Compartilhar do WhatsApp. <button type="button" id="btnInstalar">Instalar</button></div>
@@ -74,17 +79,19 @@ footer{color:var(--mute);font-size:13px;margin-top:24px}
     <div class="num">1</div>
     <div>
       <h2>O que chegou</h2>
-      <p class="hint">Chega sozinho quando você compartilha. Também dá para colar o texto ou anexar áudio, print ou conversa exportada (.txt).</p>
+      <p class="hint">Chega sozinho quando você compartilha. Áudio, vídeo, print, link do YouTube ou conversa exportada (.txt). Também dá para colar o texto.</p>
       <audio id="player" controls hidden></audio>
+      <video id="video" controls hidden playsinline style="width:100%;max-height:320px;margin-top:10px;border-radius:6px;background:#000"></video>
       <p class="wait" id="statusAudio" hidden></p>
       <textarea id="chegou" rows="6" placeholder="Mensagem, notícia ou transcrição do áudio…"></textarea>
       <div class="row">
         <label class="btn">📎 Anexar
-          <input id="arq" type="file" multiple accept="audio/*,.opus,.ogg,.m4a,.mp3,.aac,image/*,.txt,text/plain">
+          <input id="arq" type="file" multiple accept="audio/*,video/*,.opus,.ogg,.m4a,.mp3,.aac,.mp4,.mov,.3gp,image/*,.txt,text/plain">
         </label>
         <button type="button" id="limpar">Limpar tudo</button>
       </div>
       <div class="files" id="lista"></div>
+      <div class="note" id="avisoLink" hidden>Link do Instagram, TikTok ou Facebook não abre aqui. No app de origem, toque em <b>Salvar/Baixar</b> o vídeo e depois compartilhe o <b>arquivo</b> do vídeo com o Afiada (ou pela galeria).</div>
     </div>
   </section>
 
@@ -103,6 +110,22 @@ footer{color:var(--mute);font-size:13px;margin-top:24px}
 
   <section class="step">
     <div class="num">3</div>
+    <div>
+      <h2>Estilo da resposta</h2>
+      <p class="hint">Escolha a técnica. A metáfora com ironia é a padrão.</p>
+      <div class="estilos" id="estilos"></div>
+      <div class="descEstilo" id="descEstilo"></div>
+      <h2 style="margin-top:18px">Tom</h2>
+      <div class="row" id="tons">
+        <button type="button" class="chip" aria-pressed="false" data-v="respeitoso">Respeitoso e formal</button>
+        <button type="button" class="chip" aria-pressed="true" data-v="equilibrado">Equilibrado</button>
+        <button type="button" class="chip" aria-pressed="false" data-v="duro">Firme e duro</button>
+      </div>
+    </div>
+  </section>
+
+  <section class="step">
+    <div class="num">4</div>
     <div>
       <h2>Para onde vai</h2>
       <div class="row" id="destinos">
@@ -137,14 +160,14 @@ footer{color:var(--mute);font-size:13px;margin-top:24px}
     <button type="button" id="fecharConfig">Fechar</button>
   </div>
   <p class="hint" id="testeConfig"></p>
-  <p class="hint">Versão 3</p>
+  <p class="hint">Versão 4 · áudio, vídeo e 19 estilos</p>
 </dialog>
 
 <script>
 {
 const $ = id => document.getElementById(id);
-const MODELO_PADRAO = 'gemini-3.8-flash';
-const RESERVAS = ['gemini-flash-latest', 'gemini-2.5-flash', 'gemini-flash-lite-latest', 'gemini-2.5-flash-lite'];
+const MODELO_PADRAO = 'gemini-2.5-flash';
+const RESERVAS = ['gemini-flash-latest', 'gemini-2.5-flash', 'gemini-3.8-flash', 'gemini-flash-lite-latest', 'gemini-2.5-flash-lite'];
 const chegou = $('chegou'), posicao = $('posicao'), saida = $('saida'), erro = $('erro'), gerar = $('gerar');
 let anexos = [], destino = 'resposta de WhatsApp', ultima = '', instalarEvt = null;
 
@@ -218,16 +241,61 @@ function tipoAudio(f) {
 }
 const ehAudio = f => (f.type || '').startsWith('audio') || /\.(opus|ogg|m4a|mp3|aac|wav)$/i.test(f.name || '');
 const ehImagem = f => (f.type || '').startsWith('image');
+const ehVideo = f => (f.type || '').startsWith('video') || /\.(mp4|mov|3gp|webm|mkv)$/i.test(f.name || '');
+function tipoVideo(f) {
+  const n = (f.name || '').toLowerCase(), t = (f.type || '').toLowerCase();
+  if (t.startsWith('video/')) return t === 'video/quicktime' ? 'video/mov' : t;
+  if (n.endsWith('.mov')) return 'video/mov';
+  if (n.endsWith('.3gp')) return 'video/3gpp';
+  if (n.endsWith('.webm')) return 'video/webm';
+  return 'video/mp4';
+}
+/* Envia arquivo grande pela Files API do Gemini e espera ficar pronto */
+async function sobeArquivo(f, mime, aviso) {
+  const ini = await fetch('https://generativelanguage.googleapis.com/upload/v1beta/files', {
+    method: 'POST',
+    headers: {
+      'x-goog-api-key': chave(),
+      'X-Goog-Upload-Protocol': 'resumable',
+      'X-Goog-Upload-Command': 'start',
+      'X-Goog-Upload-Header-Content-Length': String(f.size),
+      'X-Goog-Upload-Header-Content-Type': mime,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({ file: { display_name: (f.name || 'midia').slice(0, 60) } })
+  });
+  const url = ini.headers.get('x-goog-upload-url');
+  if (!ini.ok || !url) throw new Error('não consegui enviar o arquivo (' + ini.status + ')');
+  aviso('Enviando o vídeo…');
+  const up = await fetch(url, { method: 'POST', headers: { 'X-Goog-Upload-Offset': '0', 'X-Goog-Upload-Command': 'upload, finalize' }, body: f });
+  const d = await up.json().catch(() => ({}));
+  let arq = d.file;
+  if (!up.ok || !arq) throw new Error(d.error?.message || 'falha no envio');
+  for (let i = 0; i < 60 && arq.state !== 'ACTIVE'; i++) {
+    if (arq.state === 'FAILED') throw new Error('o Google não conseguiu processar o vídeo');
+    aviso('Google processando o vídeo…');
+    await new Promise(r => setTimeout(r, 3000));
+    const g = await fetch('https://generativelanguage.googleapis.com/v1beta/' + arq.name, { headers: { 'x-goog-api-key': chave() } });
+    arq = await g.json();
+  }
+  if (arq.state !== 'ACTIVE') throw new Error('demorou demais para processar');
+  return { file_data: { mime_type: mime, file_uri: arq.uri } };
+}
+async function parteMidia(f, mime, aviso) {
+  if (f.size <= 14 * 1024 * 1024) return { inline_data: { mime_type: mime, data: await paraBase64(f) } };
+  return sobeArquivo(f, mime, aviso);
+}
 
 /* ---------- Anexos ---------- */
 function desenhaAnexos() {
-  $('lista').innerHTML = anexos.map((a, i) => `<span class="file">${a.tipo === 'img' ? '🖼' : a.tipo === 'audio' ? '🎧' : '📄'} ${esc(a.nome)} <button type="button" data-i="${i}">tirar</button></span>`).join('');
+  $('lista').innerHTML = anexos.map((a, i) => `<span class="file">${a.tipo === 'img' ? '🖼' : a.tipo === 'audio' ? '🎧' : a.tipo === 'video' ? '🎬' : '📄'} ${esc(a.nome)} <button type="button" data-i="${i}">tirar</button></span>`).join('');
 }
 $('lista').addEventListener('click', e => { const i = e.target.dataset.i; if (i !== undefined) { anexos.splice(+i, 1); desenhaAnexos(); } });
 
 async function recebe(files) {
   for (const f of files) {
-    if (ehAudio(f)) { anexos.push({ tipo: 'audio', nome: f.name || 'áudio', blob: f }); await transcreve(f); }
+    if (ehVideo(f)) { anexos.push({ tipo: 'video', nome: f.name || 'vídeo', blob: f }); await transcreve(f, 'video'); }
+    else if (ehAudio(f)) { anexos.push({ tipo: 'audio', nome: f.name || 'áudio', blob: f }); await transcreve(f, 'audio'); }
     else if (ehImagem(f)) anexos.push({ tipo: 'img', nome: f.name || 'print', blob: f });
     else { const t = await f.text(); anexos.push({ tipo: 'txt', nome: f.name || 'conversa.txt', texto: t.slice(-20000) }); }
   }
@@ -235,25 +303,48 @@ async function recebe(files) {
 }
 $('arq').addEventListener('change', async e => { const fs = [...e.target.files]; e.target.value = ''; await recebe(fs); });
 
-async function transcreve(f) {
-  const st = $('statusAudio'), pl = $('player');
+const PEDIDO_AUDIO = 'Transcreva fielmente este áudio de WhatsApp em português do Brasil. Mantenha as palavras de quem fala, só com pontuação. Se houver mais de uma pessoa, separe por "Pessoa 1:", "Pessoa 2:". Responda apenas com a transcrição.';
+const PEDIDO_VIDEO = 'Este é um vídeo (de WhatsApp, Instagram ou outra rede). 1) Transcreva fielmente tudo o que é falado, em português do Brasil; se houver mais de uma pessoa, separe por "Pessoa 1:", "Pessoa 2:". 2) Se aparecer texto escrito na tela (legenda, manchete), copie também. 3) No fim, em uma linha começando com "Cena:", diga em poucas palavras quem aparece e onde. Responda só com isso.';
+
+async function transcreve(f, tipo) {
+  const st = $('statusAudio'), pl = tipo === 'video' ? $('video') : $('player');
+  $('player').hidden = true; $('video').hidden = true;
   pl.src = URL.createObjectURL(f); pl.hidden = false;
-  st.hidden = false; st.textContent = 'Ouvindo o áudio e transcrevendo…';
+  const aviso = t => { st.hidden = false; st.textContent = t; };
+  aviso(tipo === 'video' ? 'Assistindo o vídeo e transcrevendo…' : 'Ouvindo o áudio e transcrevendo…');
   mostraErro('');
   try {
-    const b64 = await paraBase64(f);
-    const txt = await gemini([
-      { text: 'Transcreva fielmente este áudio de WhatsApp em português do Brasil. Mantenha as palavras de quem fala, só com pontuação. Se houver mais de uma pessoa, separe por "Pessoa 1:", "Pessoa 2:". Responda apenas com a transcrição.' },
-      { inline_data: { mime_type: tipoAudio(f), data: b64 } }
-    ], false);
-    chegou.value = (chegou.value.trim() ? chegou.value.trim() + '\n\n' : '') + '🎧 ' + txt.trim();
+    if (!chave()) throw new Error('coloque a chave do Gemini na engrenagem ⚙.');
+    const mime = tipo === 'video' ? tipoVideo(f) : tipoAudio(f);
+    const parte = await parteMidia(f, mime, aviso);
+    aviso(tipo === 'video' ? 'Assistindo o vídeo e transcrevendo…' : 'Ouvindo o áudio e transcrevendo…');
+    const txt = await gemini([{ text: tipo === 'video' ? PEDIDO_VIDEO : PEDIDO_AUDIO }, parte], false);
+    chegou.value = (chegou.value.trim() ? chegou.value.trim() + '\n\n' : '') + (tipo === 'video' ? '🎬 ' : '🎧 ') + txt.trim();
     salvar();
-    st.textContent = 'Transcrito ✓ Confira e ajuste se precisar.';
+    aviso('Transcrito ✓ Confira e ajuste se precisar.');
   } catch (e) {
     st.textContent = '';
     mostraErro('Não consegui transcrever: ' + e.message);
   }
 }
+
+/* Link de vídeo compartilhado */
+const RE_YT = /https?:\/\/(?:www\.|m\.)?(?:youtube\.com\/(?:watch\?v=|shorts\/|live\/)|youtu\.be\/)[\w\-?=&%.\/]+/i;
+const RE_REDE = /https?:\/\/(?:www\.)?(?:instagram\.com|tiktok\.com|vm\.tiktok\.com|facebook\.com|fb\.watch|kwai\.com|x\.com|twitter\.com)\//i;
+async function trataLink(texto) {
+  const yt = texto.match(RE_YT);
+  if (yt) {
+    const st = $('statusAudio'); st.hidden = false; st.textContent = 'Assistindo o vídeo do YouTube e transcrevendo…';
+    try {
+      const txt = await gemini([{ text: PEDIDO_VIDEO }, { file_data: { file_uri: yt[0] } }], false);
+      chegou.value = chegou.value.trim() + '\n\n🎬 ' + txt.trim(); salvar();
+      st.textContent = 'Transcrito ✓ Confira e ajuste se precisar.';
+    } catch (e) { st.textContent = ''; mostraErro('Não consegui assistir o vídeo do YouTube: ' + e.message); }
+    return;
+  }
+  $('avisoLink').hidden = !RE_REDE.test(texto);
+}
+chegou.addEventListener('paste', () => setTimeout(() => trataLink(chegou.value), 50));
 
 /* ---------- O que veio do Compartilhar ---------- */
 async function pegaCompartilhado() {
@@ -274,6 +365,7 @@ async function pegaCompartilhado() {
     const texto = [meta.title, meta.text, meta.url].filter(Boolean).join('\n').trim();
     if (texto) { chegou.value = texto; salvar(); }
     await recebe(files);
+    if (texto && !files.length) await trataLink(texto);
     posicao.focus();
   } catch (e) { mostraErro('Não consegui ler o que foi compartilhado. Tente anexar.'); }
 }
@@ -282,12 +374,72 @@ async function pegaCompartilhado() {
 chegou.value = ls.get('af_chegou'); posicao.value = ls.get('af_pos');
 function salvar() { ls.set('af_chegou', chegou.value); ls.set('af_pos', posicao.value); }
 chegou.addEventListener('input', salvar); posicao.addEventListener('input', salvar);
-function limparTudo() { chegou.value = ''; posicao.value = ''; anexos = []; desenhaAnexos(); saida.innerHTML = ''; $('player').hidden = true; $('statusAudio').hidden = true; salvar(); mostraErro(''); }
+function limparTudo() { chegou.value = ''; posicao.value = ''; anexos = []; desenhaAnexos(); saida.innerHTML = ''; $('player').hidden = true; $('video').hidden = true; $('avisoLink').hidden = true; $('statusAudio').hidden = true; salvar(); mostraErro(''); }
 $('limpar').addEventListener('click', limparTudo);
 document.querySelectorAll('#destinos .chip').forEach(b => b.addEventListener('click', () => {
   document.querySelectorAll('#destinos .chip').forEach(x => x.setAttribute('aria-pressed', 'false'));
   b.setAttribute('aria-pressed', 'true'); destino = b.dataset.v;
 }));
+
+/* ---------- Estilos e tom ---------- */
+const ESTILOS = [
+  { id: 'metafora', nome: 'Metáfora com ironia', desc: 'Falso elogio + imagem do dia a dia + o alvo falando entre aspas. Ex.: "quebra suas pernas para te dar uma muleta".',
+    regra: 'Metáfora estendida com ironia (alegoria irônica): 1) falso elogio de abertura ("X é ótimo em uma coisa…"); 2) uma imagem física do dia a dia (roça, estrada, oficina, caminhão, família, café) que traduz o problema; 3) personificação: o alvo ganha voz; 4) fecho com a fala do alvo entre aspas mostrando a arrogância. Molde: "O governo é muito bom em uma coisa: ele quebra suas pernas para te dar uma muleta e diz: viu? Sem nossa ajuda você não andaria".' },
+  { id: 'formal', nome: 'Formal e institucional', desc: 'Linguagem de ofício e nota pública. Educado, firme nos fatos, sem ironia.',
+    regra: 'Resposta formal e institucional, como nota pública ou carta a uma autoridade: cumprimento cordial, reconhecimento do ponto do outro, exposição clara da posição com fatos do material, pedido ou proposta concreta, fecho respeitoso. Sem ironia, sem gíria.' },
+  { id: 'perguntas', nome: 'Perguntas que desmontam', desc: 'Três ou quatro perguntas em sequência que deixam o outro sem saída.',
+    regra: 'Perguntas retóricas em sequência (método socrático): 3 a 5 perguntas curtas e encadeadas, cada uma apertando mais, que levam o leitor a concluir sozinho a posição do Neiron. Feche com uma frase curta de conclusão.' },
+  { id: 'contraste', nome: 'Contraste "eles × nós"', desc: 'Frases em espelho: enquanto eles fazem isso, nós fazemos aquilo.',
+    regra: 'Antítese e paralelismo: frases em espelho contrapondo o que o outro lado faz e o que o Neiron defende ("Enquanto uns…, outros…"; "Eles prometem…, nós entregamos…"). Ritmo marcado, de comício.' },
+  { id: 'historia', nome: 'História pessoal', desc: 'Começa com uma vivência sua, traz um exemplo real e fecha com emoção.',
+    regra: 'Storytelling: abra com uma cena ou vivência pessoal do Neiron, use só o que estiver no posicionamento dele (não invente passagens da vida dele; se não houver, use a experiência de quem vive no interior, sem dizer que aconteceu com ele), ligue a um exemplo real do assunto e feche com emoção e uma frase de efeito.' },
+  { id: 'dados', nome: 'Fatos e números', desc: 'Resposta seca, com os dados do próprio material. Sem adjetivo sobrando.',
+    regra: 'Resposta baseada em fatos: liste de forma clara os fatos e números que estão no material (nunca invente números; se não houver, diga o que precisaria ser verificado), compare o prometido com o entregue e conclua com uma frase objetiva.' },
+  { id: 'humor', nome: 'Bom humor', desc: 'Leve, engraçado, faz o povo rir sem ofender ninguém.',
+    regra: 'Humor leve e popular: exagero cômico, situação engraçada do cotidiano, piada que qualquer um entende. Sem deboche de pessoa, sem palavrão. O riso tem que reforçar o argumento.' },
+  { id: 'ditado', nome: 'Ditado popular', desc: 'Usa um provérbio conhecido ou sabedoria da roça para fechar a questão.',
+    regra: 'Construa a resposta em torno de um ditado popular brasileiro conhecido ou sabedoria da roça (ex.: "quem planta vento colhe tempestade", "não adianta pôr tranca depois da porta arrombada"). Mostre como o ditado se aplica ao caso e feche com ele.' },
+  { id: 'absurdo', nome: 'Levar ao absurdo', desc: 'Pega a lógica do outro e estica até ficar ridícula.',
+    regra: 'Redução ao absurdo: aceite a lógica do outro lado por um momento e leve-a às últimas consequências até ficar evidentemente absurda ("Se é assim, então amanhã…"). Volte ao bom senso no fecho.' },
+  { id: 'concordo', nome: 'Concordo, mas…', desc: 'Concede um ponto ao outro e depois vira o jogo.',
+    regra: 'Concessão e virada: comece concordando sinceramente com algo que o outro disse, mostre maturidade, e então vire o argumento ("Concordo que…, mas o problema é…"). Termine com a posição do Neiron mais forte.' },
+  { id: 'bordao', nome: 'Frase de efeito', desc: 'Uma ou duas linhas que grudam na cabeça. Bom para legenda e corte.',
+    regra: 'Frase de efeito: respostas curtíssimas, de 1 a 2 linhas, com ritmo, rima ou trocadilho, que grudam na memória e funcionam como bordão. Até na versão completa, no máximo 4 linhas.' },
+  { id: 'biblica', nome: 'Base bíblica e valores', desc: 'Apoia a resposta num versículo conhecido e em valores de família e trabalho.',
+    regra: 'Base bíblica e valores: use um versículo bíblico conhecido, com a referência correta (livro, capítulo e versículo; não invente citação), ligado a valores de trabalho, honestidade, família e justiça. Tom de quem fala com fé, sem pregar contra ninguém por religião.' },
+  { id: 'ponte', nome: 'Conciliador', desc: 'Procura o ponto em comum e chama para resolver junto.',
+    regra: 'Tom conciliador: reconheça o que une os dois lados, baixe a temperatura, mostre a posição do Neiron como solução e faça um convite concreto para resolver junto. Firme no conteúdo, macio na forma.' },
+  { id: 'denuncia', nome: 'Denúncia firme', desc: 'Tom de tribuna: indignação, cobrança e responsabilidade.',
+    regra: 'Denúncia de tribuna: indignação controlada, cobrança direta de responsabilidade sobre a prática concreta, frases curtas e fortes, chamado à ação no fim. Sem ofensa pessoal e sem acusação que não esteja no material.' },
+  { id: 'analogia', nome: 'Comparação simples', desc: 'Explica com uma comparação do dia a dia, sem ironia.',
+    regra: 'Analogia simples e sem ironia: compare o caso com algo do dia a dia (cuidar da lavoura, consertar caminhão, administrar a casa) para o povo entender na hora. Clareza acima de tudo.' },
+  { id: 'didatico', nome: 'Explica para o povo', desc: 'Passo a passo simples: o que aconteceu, por que importa, o que fazer.',
+    regra: 'Didático: explique em linguagem bem simples em três partes: o que aconteceu, por que isso importa na vida das pessoas e o que deveria ser feito. Sem palavras difíceis.' },
+  { id: 'inversao', nome: 'E se fosse ao contrário?', desc: 'Troca os papéis para mostrar o dois pesos, duas medidas.',
+    regra: 'Inversão de papéis: pergunte e mostre o que aconteceria se a situação fosse ao contrário (se fosse o adversário, se fosse com o cidadão comum), expondo o "dois pesos, duas medidas".' },
+  { id: 'tres', nome: 'Regra de três', desc: 'Três pontos curtos e ritmados, fáceis de lembrar.',
+    regra: 'Regra de três (tríade): organize a resposta em exatamente três pontos curtos e ritmados, com estrutura repetida, crescendo em força até o terceiro.' },
+  { id: 'caos', nome: 'Engenheiros do Caos', desc: 'Mostra como o outro lado usa raiva e algoritmo para manipular. Fecha indicando o conceito do livro.',
+    regra: 'Use criticamente os conceitos do livro "Os Engenheiros do Caos" (Giuliano da Empoli): mostre como a mensagem do outro lado explora raiva, medo, polarização, algoritmo ou o líder como "palhaço"/espetáculo, e devolva com uma posição que puxe para os fatos e o interesse real do povo. No campo "tecnica", indique qual conceito do livro foi usado.' }
+];
+const TONS = {
+  respeitoso: 'Tom respeitoso e formal: educado, cordial, sem ironia agressiva; a firmeza está nos argumentos.',
+  equilibrado: 'Tom equilibrado: firme, mas sem agressividade.',
+  duro: 'Tom firme e duro: direto, sem rodeio, sem pedir licença. Ainda assim sem ofensa pessoal nem palavrão.'
+};
+let estilo = ls.get('af_estilo') || 'metafora', tom = ls.get('af_tom') || 'equilibrado';
+if (!ESTILOS.some(e => e.id === estilo)) estilo = 'metafora';
+function desenhaEstilos() {
+  $('estilos').innerHTML = ESTILOS.map(e => `<button type="button" data-e="${e.id}" aria-pressed="${e.id === estilo}">${esc(e.nome)}</button>`).join('');
+  const e = ESTILOS.find(x => x.id === estilo);
+  $('descEstilo').innerHTML = `<b>${esc(e.nome)}:</b> ${esc(e.desc)}`;
+}
+$('estilos').addEventListener('click', ev => { const b = ev.target.closest('button'); if (!b) return; estilo = b.dataset.e; ls.set('af_estilo', estilo); desenhaEstilos(); });
+document.querySelectorAll('#tons .chip').forEach(b => {
+  b.setAttribute('aria-pressed', String(b.dataset.v === tom));
+  b.addEventListener('click', () => { tom = b.dataset.v; ls.set('af_tom', tom); document.querySelectorAll('#tons .chip').forEach(x => x.setAttribute('aria-pressed', String(x === b))); });
+});
+desenhaEstilos();
 
 /* ---------- Ditado do posicionamento ---------- */
 const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -316,22 +468,22 @@ $('mic').addEventListener('click', () => {
 /* ---------- Gerar ---------- */
 function prompt(outra) {
   const txts = anexos.filter(a => a.tipo === 'txt').map(a => `--- ${a.nome} ---\n${a.texto}`).join('\n\n');
+  const e = ESTILOS.find(x => x.id === estilo);
   return `Você escreve respostas políticas e de debate em português do Brasil para Neiron Costa, empresário e produtor de café do Espírito Santo, com raízes em Lajinha/MG.
 
-TÉCNICA OBRIGATÓRIA: metáfora estendida com ironia (alegoria irônica), no molde de "O governo é muito bom em uma coisa: ele quebra suas pernas para te dar uma muleta e diz 'viu? Sem nossa ajuda, você não andaria'". Ingredientes:
-1. Falso elogio de abertura ("X é ótimo em uma coisa…").
-2. Uma imagem física do dia a dia (roça, estrada, oficina, caminhão, família, café…) que traduz o problema.
-3. Personificação: o alvo ganha voz.
-4. Fecho com a fala do alvo entre aspas, mostrando a arrogância (sermocinação).
+ESTILO OBRIGATÓRIO — ${e.nome}:
+${e.regra}
+
+TOM: ${TONS[tom]}
 
 REGRAS:
 - Siga fielmente o posicionamento do Neiron. Não mude o lado dele.
-- Mire uma prática ou decisão concreta, não "o governo" em geral, para não ser derrubado com um contraexemplo.
-- Não invente fatos, números, nomes ou acusações que não estejam no material. Sem ataque pessoal, xingamento ou ofensa à família de ninguém.
+- Mire uma prática ou decisão concreta, não um grupo inteiro em geral, para não ser derrubado com um contraexemplo.
+- Não invente fatos, números, nomes, citações ou acusações que não estejam no material. Sem ataque pessoal, xingamento ou ofensa à família de ninguém.
 - Frases curtas, ritmo de fala, linguagem simples do povo.
-- Destino: ${destino}.${outra ? `\n- Use uma metáfora DIFERENTE desta, já usada: ${outra}` : ''}
+- Destino: ${destino}.${outra ? `\n- Faça uma versão DIFERENTE desta, já usada: ${outra}` : ''}
 
-O QUE CHEGOU (mensagem, conversa ou transcrição de áudio):
+O QUE CHEGOU (mensagem, conversa, transcrição de áudio ou vídeo):
 ${chegou.value.trim() || '(veja os anexos)'}
 ${txts ? '\nCONVERSA EXPORTADA DO WHATSAPP:\n' + txts : ''}
 ${anexos.some(a => a.tipo === 'img') ? '\nHá prints da conversa anexados; leia-os.' : ''}
@@ -340,15 +492,15 @@ POSICIONAMENTO DO NEIRON:
 ${posicao.value.trim()}
 
 Responda SOMENTE com JSON neste formato:
-{"entendi":"1 frase dizendo o que o outro lado disse","metafora":"a imagem escolhida em poucas palavras","versoes":[{"titulo":"Firme e direta","texto":"..."},{"titulo":"Analítica","texto":"..."},{"titulo":"Curta para redes","texto":"até 280 caracteres"}],"cuidado":"1 frase: o ponto fraco que o outro lado pode usar contra essa resposta"}`;
+{"entendi":"1 frase dizendo o que o outro lado disse","tecnica":"em poucas palavras, a imagem, pergunta, ditado ou recurso central usado","versoes":[{"titulo":"Completa","texto":"..."},{"titulo":"Direta","texto":"versão mais enxuta"},{"titulo":"Curta para redes","texto":"até 280 caracteres"}],"cuidado":"1 frase: o ponto fraco que o outro lado pode usar contra essa resposta"}`;
 }
 
 function desenha(r) {
-  ultima = r.metafora || '';
-  saida.innerHTML = `<div class="meta"><p><small>O que chegou</small><br>${esc(r.entendi || '')}</p><p><small>Imagem usada</small><br>${esc(r.metafora || '')}</p></div>` +
+  ultima = r.tecnica || r.metafora || '';
+  saida.innerHTML = `<div class="meta"><p><small>O que chegou</small><br>${esc(r.entendi || '')}</p><p><small>${esc(ESTILOS.find(x => x.id === estilo).nome)}</small><br>${esc(r.tecnica || r.metafora || '')}</p></div>` +
     (r.versoes || []).map((v, i) => `<div class="card"><h3>${esc(v.titulo)}</h3><div class="txt" id="v${i}">${esc(v.texto)}</div><div class="row"><button type="button" data-c="v${i}">Copiar</button><a class="btn wa" href="https://wa.me/?text=${encodeURIComponent(v.texto)}" target="_blank" rel="noopener">WhatsApp</a></div></div>`).join('') +
     (r.cuidado ? `<div class="note"><b>Cuidado:</b> ${esc(r.cuidado)}</div>` : '') +
-    `<div class="row"><button type="button" id="outra">Outra metáfora</button></div>`;
+    `<div class="row"><button type="button" id="outra">Outra versão</button></div>`;
   $('outra').addEventListener('click', () => roda(true));
   saida.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
