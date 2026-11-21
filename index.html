@@ -64,6 +64,7 @@ details.mais[open] summary::before{content:'–'}
 .card .row{justify-content:flex-end}
 .card .ajustes{justify-content:flex-start;border-top:1px dashed var(--mute);padding-top:10px}
 .card .ajustes button{min-height:36px;font-size:13px;padding:0 10px;border-width:1px}
+#modos .chip{justify-content:center;font-size:14px;padding:0 6px;min-height:50px;text-align:center}
 .estrela{border:0;min-height:36px;width:36px;padding:0;justify-content:center;font-size:20px}
 .cuidado{font-size:14px}
 .err{color:var(--red);font-weight:600}
@@ -97,7 +98,11 @@ footer{color:var(--mute);font-size:13px;margin-top:20px}
   <div class="note" id="instalar" hidden>Instale para aparecer no Compartilhar. <button type="button" id="btnInstalar">Instalar</button></div>
 
   <section class="box">
-    <h2>O que chegou <span style="font-weight:600;color:var(--mute);font-size:14px">(de outra pessoa)</span></h2>
+    <div id="modos" style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin:0 0 14px">
+      <button type="button" class="chip" data-m="responder">💬 Responder alguém</button>
+      <button type="button" class="chip" data-m="revisar">✍️ Revisar minha resposta</button>
+    </div>
+    <h2 id="tituloEntrada">O que chegou <span style="font-weight:600;color:var(--mute);font-size:14px">(de outra pessoa)</span></h2>
     <input type="text" id="quem" placeholder="Quem mandou? Ex.: Felipe do Gás (opcional)" autocomplete="off" style="margin-bottom:8px">
     <audio id="player" controls hidden></audio>
     <video id="video" controls hidden playsinline></video>
@@ -136,7 +141,7 @@ footer{color:var(--mute);font-size:13px;margin-top:20px}
         <button type="button" class="chip" data-v="equilibrado">Equilibrado</button>
         <button type="button" class="chip" data-v="duro">Firme e duro</button>
       </div>
-      <label for="posicao" class="hint" style="display:block;margin-top:14px;font-weight:700">Sua opinião (opcional)</label>
+      <label for="posicao" id="rotPosicao" class="hint" style="display:block;margin-top:14px;font-weight:700">Sua opinião (opcional)</label>
       <textarea id="posicao" rows="3" placeholder="Deixe vazio para receber 3 caminhos: concordar, discordar e meio-termo."></textarea>
       <div class="row" style="margin-top:6px"><button type="button" id="mic">🎙 Falar</button><span class="hint" id="micStatus" style="margin:0"></span></div>
     </details>
@@ -167,7 +172,7 @@ footer{color:var(--mute);font-size:13px;margin-top:20px}
     <button type="button" id="fecharConfig">Fechar</button>
   </div>
   <p class="hint" id="testeConfig"></p>
-  <p class="hint">Versão 5.1</p>
+  <p class="hint">Versão 5.2</p>
 </dialog>
 
 <dialog id="hist">
@@ -279,6 +284,19 @@ const TONS = {
   duro: 'Tom firme e duro: direto, sem rodeio. Ainda assim sem ofensa pessoal nem palavrão.'
 };
 
+/* ================= Modo ================= */
+let modo = ls.get('af_modo') === 'revisar' ? 'revisar' : 'responder';
+function pintaModo() {
+  document.querySelectorAll('#modos .chip').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.m === modo)));
+  const rev = modo === 'revisar';
+  $('tituloEntrada').innerHTML = rev ? 'Sua resposta <span style="font-weight:600;color:var(--mute);font-size:14px">(o que você escreveu ou gravou)</span>' : 'O que chegou <span style="font-weight:600;color:var(--mute);font-size:14px">(de outra pessoa)</span>';
+  $('quem').placeholder = rev ? 'Para quem é a resposta? (opcional)' : 'Quem mandou? Ex.: Felipe do Gás (opcional)';
+  $('chegou').placeholder = rev ? 'Cole ou compartilhe a resposta que VOCÊ escreveu ou gravou. O app avalia e melhora.' : 'Cole a mensagem, notícia, link do YouTube… ou compartilhe áudio, vídeo e print direto do WhatsApp.';
+  $('rotPosicao').textContent = rev ? 'O que você está respondendo (opcional)' : 'Sua opinião (opcional)';
+  $('posicao').placeholder = rev ? 'Cole aqui a mensagem da outra pessoa, se quiser que o app leve em conta.' : 'Deixe vazio para receber 3 caminhos: concordar, discordar e meio-termo.';
+}
+document.querySelectorAll('#modos .chip').forEach(b => b.addEventListener('click', () => { modo = b.dataset.m; ls.set('af_modo', modo); pintaModo(); }));
+
 /* ================= Estado salvo ================= */
 let plateia = ls.get('af_plateia') || 'politica';
 if (!PLATEIAS[plateia]) plateia = 'politica';
@@ -302,6 +320,7 @@ $('selEstilo').addEventListener('change', e => { estilo = e.target.value; ls.set
 $('selVoz').addEventListener('change', e => { voz = e.target.value; ls.set('af_voz', voz); });
 document.querySelectorAll('#tons .chip').forEach(b => b.addEventListener('click', () => { tom = b.dataset.v; ls.set('af_tom5', tom); pintaOpcoes(); }));
 pintaOpcoes();
+pintaModo();
 
 /* ================= Configurações ================= */
 const chave = () => ls.get('af_chave').trim();
@@ -434,7 +453,7 @@ async function transcreve(f, tipo) {
     const parte = await parteMidia(f, tipo === 'video' ? tipoVideo(f) : tipoAudio(f), status);
     status(msg);
     const txt = await gemini([{ text: tipo === 'video' ? PEDIDO_VIDEO : PEDIDO_AUDIO }, parte], false);
-    chegou.value = (chegou.value.trim() ? chegou.value.trim() + '\n\n' : '') + (tipo === 'video' ? '🎬 Vídeo recebido: ' : '🎧 Áudio recebido: ') + txt.trim();
+    chegou.value = (chegou.value.trim() ? chegou.value.trim() + '\n\n' : '') + (modo === 'revisar' ? (tipo === 'video' ? '🎬 Meu vídeo: ' : '🎧 Meu áudio: ') : (tipo === 'video' ? '🎬 Vídeo recebido: ' : '🎧 Áudio recebido: ')) + txt.trim();
     salvar(); status('Transcrito ✓');
     return true;
   } catch (e) { status(''); mostraErro('Não consegui transcrever: ' + e.message); return false; }
@@ -525,21 +544,62 @@ $('mic').addEventListener('click', () => {
 });
 
 /* ================= Cérebro: o pedido ao Gemini ================= */
-const PERFIL = `QUEM VAI RESPONDER (o autor das respostas que você escreve): Neiron Costa, 50 anos, empresário capixaba (logística e socorro automotivo desde 2005, a NF da Costa), produtor de café arábica no Caparaó, criado na roça em Minas Gerais, ex-vereador em Lajinha/MG, ativo na política do Espírito Santo e de Lajinha. Fala o português do povo, direto, sem palavra difícil. Gosta de frases curtas, ritmo de fala, imagem do dia a dia (roça, café, estrada, caminhão, oficina, família) e de história pessoal com emoção. Use dados da vida dele só quando ajudarem e nunca invente passagens da vida dele.`;
+const PERFIL = `SOBRE O USUÁRIO (Neiron Costa): 50 anos, empresário capixaba (logística e socorro automotivo desde 2005, a NF da Costa), produtor de café arábica no Caparaó, criado na roça em Minas Gerais, ex-vereador em Lajinha/MG, ativo na política do Espírito Santo e de Lajinha. Fala o português do povo, direto, sem palavra difícil. Gosta de frases curtas, ritmo de fala, imagem do dia a dia (roça, café, estrada, caminhão, oficina, família) e de história pessoal com emoção. Use dados da vida dele só quando ajudarem e nunca invente passagens da vida dele.`;
+
+function blocoMaterial() {
+  const txts = anexos.filter(a => a.tipo === 'txt').map(a => `--- ${a.nome} ---\n${a.texto}`).join('\n\n');
+  return `${chegou.value.trim() || '(o conteúdo está nos anexos)'}${txts ? '\n\nCONVERSA EXPORTADA DO WHATSAPP:\n' + txts : ''}${anexos.some(a => a.tipo === 'img') ? '\n\n(Há prints anexados; leia-os.)' : ''}`;
+}
 
 function montaPedido(opts = {}) {
   const pl = PLATEIAS[plateia];
   const e = ESTILOS.find(x => x.id === estilo);
   const v = VOZES.find(x => x.id === voz);
-  const opiniao = posicao.value.trim();
+  const extra = posicao.value.trim();
   const quem = $('quem').value.trim();
+  const autor = quem || 'uma outra pessoa (não identificada)';
   const dna = ls.get('af_dna');
-  const txts = anexos.filter(a => a.tipo === 'txt').map(a => `--- ${a.nome} ---\n${a.texto}`).join('\n\n');
-  const caminhos = opiniao
-    ? `A opinião do Neiron está definida (abaixo). Gere 3 versões NA LINHA DELE: {"rotulo":"Completa"}, {"rotulo":"Direta"} (mais enxuta) e {"rotulo":"Curta"} (até 280 caracteres, para legenda ou resposta rápida).`
-    : `O Neiron ainda não definiu a opinião. Gere 3 caminhos para ele escolher, cada um capaz de agradar a maioria do grupo: {"rotulo":"Concordar com classe"} (concorda, mas acrescenta algo que o coloca acima da conversa), {"rotulo":"Discordar com classe"} (discorda com firmeza e elegância, sem humilhar) e {"rotulo":"Meio-termo que une"} (encontra o ponto em comum e sai como o sensato do grupo).`;
-  return `Você é o redator e estrategista de comunicação pessoal do Neiron. Sua missão: fazer o Neiron sair por cima em qualquer conversa, com argumento que agrade a maioria de quem lê, concordando ou não.
+  const rev = modo === 'revisar';
 
+  const cabeca = rev
+? `TAREFA: o usuário deste app, Neiron, escreveu (ou gravou) uma RESPOSTA e quer uma segunda opinião antes de mandar${quem ? ` para ${quem}` : ''}. Avalie e entregue versões melhores da resposta DELE.
+
+TEXTO/ÁUDIO DO PRÓPRIO NEIRON (é a resposta dele, que você vai melhorar):
+<<<
+${blocoMaterial()}
+>>>
+${extra ? `\nMENSAGEM QUE ELE ESTÁ RESPONDENDO (de outra pessoa):\n<<<\n${extra}\n>>>\n` : ''}
+Mantenha a posição e as ideias do Neiron. Corrija o que pode queimá-lo, deixe mais forte, mais claro e mais convincente para a maioria.`
+: `TAREFA: escrever a RESPOSTA que o usuário deste app, Neiron, vai mandar para ${autor}.
+
+MENSAGEM QUE O NEIRON RECEBEU — AUTOR: ${autor.toUpperCase()}
+<<<
+${blocoMaterial()}
+>>>
+
+QUEM É QUEM (obrigatório, leia duas vezes):
+- Quem fala no material acima é ${autor}. O Neiron NÃO é o autor desse material e NÃO é a voz do áudio ou do vídeo.
+- Mesmo que o assunto combine com a vida do Neiron (estrada, caminhão, oficina, café, política, Lajinha), o material continua sendo de ${autor}. Não deduza que é do Neiron por causa do assunto.
+- Se o nome "Neiron" aparecer no material, é ${autor} falando COM o Neiron ou SOBRE ele.
+- As respostas são do Neiron, em primeira pessoa, PARA ${quem || 'essa pessoa'} (ou comentando no grupo o que ela disse).${extra ? `\n\nOPINIÃO DO NEIRON SOBRE O ASSUNTO (siga essa linha):\n${extra}` : ''}`;
+
+  const caminhos = rev
+    ? `Gere 3 versões melhoradas da resposta do Neiron: {"rotulo":"Sua versão melhorada"} (mesmo conteúdo, bem escrita), {"rotulo":"Mais forte"} (mais convincente) e {"rotulo":"Curta"} (até 280 caracteres).`
+    : extra
+      ? `Gere 3 versões NA LINHA DA OPINIÃO DO NEIRON: {"rotulo":"Completa"}, {"rotulo":"Direta"} (mais enxuta) e {"rotulo":"Curta"} (até 280 caracteres).`
+      : `O Neiron ainda não definiu a opinião. Gere 3 caminhos para ele escolher, cada um capaz de agradar a maioria do grupo: {"rotulo":"Concordar com classe"} (concorda com ${quem || 'a pessoa'}, mas acrescenta algo que coloca o Neiron acima da conversa), {"rotulo":"Discordar com classe"} (discorda com firmeza e elegância, sem humilhar) e {"rotulo":"Meio-termo que une"} (encontra o ponto em comum e sai como o sensato do grupo).`;
+
+  const termo = rev
+    ? `TERMÔMETRO: avalie friamente a resposta ORIGINAL do Neiron. "veredito" = "responder" (pode mandar, está boa), "privado" (melhor mandar no privado) ou "nao" (melhor não mandar, pode queimar). "motivo" em 1 frase dizendo o principal acerto ou erro do texto dele. "maioria" em 1 frase: como a maioria do grupo vai receber.`
+    : `TERMÔMETRO: avalie friamente se vale a pena o Neiron responder ${quem || 'essa pessoa'} neste grupo. "veredito" = "responder", "privado" (melhor falar no privado) ou "nao" (melhor não responder ou só reagir). "motivo" em 1 frase. "maioria" em 1 frase: como a maioria silenciosa do grupo está vendo o que ${quem || 'a pessoa'} disse.`;
+
+  const entendi = rev ? 'O que o texto do Neiron passa para quem lê, em 1 frase' : `Comece com '${quem || 'A pessoa'} está dizendo que' e resuma em 1 frase o que ${quem || 'ela'} disse`;
+
+  return `Você é o redator e estrategista de comunicação pessoal do Neiron, o usuário deste app. Missão: fazer o Neiron sair por cima em qualquer conversa, com argumento que agrade a maioria de quem lê, concordando ou não.
+
+${cabeca}
+
+------------------------------
 ${PERFIL}
 ${dna ? `\nJEITO DE ESCREVER DO NEIRON (imite vocabulário, ritmo, saudações e pontuação destes exemplos, sem copiar frases):\n"""${dna}"""\n` : ''}
 GRUPO / PLATEIA: ${pl.nome}. ${pl.regra}
@@ -552,25 +612,15 @@ REGRAS DE OURO:
 - Nunca invente fatos, números, nomes, datas, citações ou acusações. Use só o que está no material. Se faltar dado, argumente com lógica e valores.
 - Citações e versículos só se forem reais e com autor/referência corretos.
 - Sem ataque pessoal, xingamento, preconceito ou ofensa à família de ninguém. A crítica mira a prática, não a pessoa.
-- Português do Brasil, frases curtas, pronto para colar no WhatsApp. Pode usar no máximo 1 emoji por versão, e só se combinar com o grupo.
+- Português do Brasil, frases curtas, pronto para colar no WhatsApp. No máximo 1 emoji por versão, e só se combinar com o grupo.
 - Escreva como pessoa, não como robô: nada de "Prezado interlocutor", nada de listas com marcadores na resposta.${opts.outra ? `\n- Faça versões NOVAS e diferentes destas já usadas: ${opts.outra}` : ''}
 
 ${caminhos}
 
-ATENÇÃO — QUEM É QUEM:
-- O material abaixo foi enviado por OUTRA PESSOA${quem ? ` (${quem})` : ''}, nunca pelo Neiron. O Neiron só recebeu e encaminhou para você.
-- As respostas são do Neiron PARA essa pessoa (ou comentando o que ela disse no grupo). Escreva em primeira pessoa como Neiron, falando com ${quem || 'quem mandou'}.
-- Nunca trate o material como se fosse fala do Neiron, nunca responda ao próprio Neiron e nunca chame o Neiron de "você".
-
-MATERIAL RECEBIDO DE ${quem ? quem.toUpperCase() : 'OUTRA PESSOA'} (mensagem, conversa, transcrição de áudio ou vídeo):
-${chegou.value.trim() || '(veja os anexos)'}
-${txts ? '\nCONVERSA EXPORTADA DO WHATSAPP:\n' + txts : ''}${anexos.some(a => a.tipo === 'img') ? '\nHá prints da conversa anexados; leia-os com atenção.' : ''}
-${opiniao ? `\nOPINIÃO DO NEIRON:\n${opiniao}` : ''}
-
-TERMÔMETRO: avalie friamente se vale a pena responder neste grupo. "veredito" = "responder", "privado" (melhor falar no privado) ou "nao" (melhor não responder ou só reagir). "motivo" em 1 frase. "maioria" em 1 frase: como a maioria silenciosa do grupo está vendo o assunto.
+${termo}
 
 Responda SOMENTE com JSON:
-{"entendi":"1 frase: o que ${quem || 'a outra pessoa'} disse","termometro":{"veredito":"responder|privado|nao","motivo":"...","maioria":"..."},"versoes":[{"rotulo":"...","tecnica":"técnica usada em poucas palavras","texto":"..."},{"rotulo":"...","tecnica":"...","texto":"..."},{"rotulo":"...","tecnica":"...","texto":"..."}],"cuidado":"1 frase: o ponto fraco que alguém pode usar contra essas respostas","conceito":"${plateia === 'politica' ? 'conceito de Os Engenheiros do Caos usado ou relevante, em poucas palavras' : ''}"}`;
+{"entendi":"${entendi}","termometro":{"veredito":"responder|privado|nao","motivo":"...","maioria":"..."},"versoes":[{"rotulo":"...","tecnica":"técnica usada em poucas palavras","texto":"..."},{"rotulo":"...","tecnica":"...","texto":"..."},{"rotulo":"...","tecnica":"...","texto":"..."}],"cuidado":"1 frase: o ponto fraco que alguém pode usar contra essas respostas","conceito":"${plateia === 'politica' ? 'conceito de Os Engenheiros do Caos usado ou relevante, em poucas palavras' : ''}"}`;
 }
 
 /* ================= Gerar ================= */
@@ -586,7 +636,7 @@ async function roda(outra) {
     for (const a of anexos.filter(a => a.tipo === 'img')) parts.push({ inline_data: { mime_type: a.blob.type || 'image/jpeg', data: await paraBase64(a.blob) } });
     const txt = await gemini(parts, true);
     const r = JSON.parse(txt.slice(txt.indexOf('{'), txt.lastIndexOf('}') + 1));
-    r.id = Date.now(); r.plateia = plateia; r.quem = $('quem').value.trim(); r.entrada = chegou.value.trim().slice(0, 300); r.fav = false;
+    r.id = Date.now(); r.plateia = plateia; r.quem = $('quem').value.trim(); r.modo = modo; r.entrada = chegou.value.trim().slice(0, 300); r.fav = false;
     ultimo = r; guardaHist(r); desenha(r);
   } catch (e) {
     saida.innerHTML = '';
@@ -635,7 +685,7 @@ saida.addEventListener('click', async e => {
   const btn = e.target, antes = btn.textContent; btn.textContent = '…'; btn.disabled = true;
   try {
     const dna = ls.get('af_dna');
-    const novo = await gemini([{ text: `${PERFIL}\n${dna && aj === 'voz' ? `Exemplos de como o Neiron escreve:\n"""${dna}"""\n` : ''}\nContexto do grupo: ${PLATEIAS[ultimo.plateia || plateia].nome}.\nMensagem que ${ultimo.quem || 'outra pessoa'} mandou para o Neiron (a resposta é do Neiron para essa pessoa): ${ultimo.entrada}\n\nTexto atual da resposta:\n"""${v.texto}"""\n\nAJUSTE: ${AJUSTES[aj]}\nNão invente fatos nem citações. Responda só com o novo texto, pronto para colar no WhatsApp.` }], false, 0.8);
+    const novo = await gemini([{ text: `${PERFIL}\n${dna && aj === 'voz' ? `Exemplos de como o Neiron escreve:\n"""${dna}"""\n` : ''}\nContexto do grupo: ${PLATEIAS[ultimo.plateia || plateia].nome}.\n${ultimo.modo === 'revisar' ? 'O texto abaixo é uma resposta do próprio Neiron.' : `Mensagem que ${ultimo.quem || 'outra pessoa'} mandou para o Neiron (o Neiron NÃO é o autor dela): ${ultimo.entrada}. A resposta abaixo é do Neiron para essa pessoa.`}\n\nTexto atual da resposta:\n"""${v.texto}"""\n\nAJUSTE: ${AJUSTES[aj]}\nNão invente fatos nem citações. Responda só com o novo texto, pronto para colar no WhatsApp.` }], false, 0.8);
     v.texto = novo.trim().replace(/^"+|"+$/g, '');
     card.querySelector('.txt').textContent = v.texto;
     card.querySelector('[data-acao=wa]').href = 'https://wa.me/?text=' + encodeURIComponent(v.texto);
@@ -648,7 +698,7 @@ saida.addEventListener('click', async e => {
 function lerHist() { try { return JSON.parse(ls.get('af_hist') || '[]'); } catch (e) { return []; } }
 function guardaHist(r) {
   let h = lerHist().filter(x => x.id !== r.id);
-  h.unshift({ id: r.id, plateia: r.plateia, quem: r.quem, entrada: r.entrada, entendi: r.entendi, versoes: r.versoes, termometro: r.termometro, cuidado: r.cuidado, conceito: r.conceito });
+  h.unshift({ id: r.id, plateia: r.plateia, quem: r.quem, modo: r.modo, entrada: r.entrada, entendi: r.entendi, versoes: r.versoes, termometro: r.termometro, cuidado: r.cuidado, conceito: r.conceito });
   const favs = h.filter(x => x.versoes?.some(v => v.fav)), resto = h.filter(x => !x.versoes?.some(v => v.fav)).slice(0, 40);
   h = [...favs, ...resto].sort((a, b) => b.id - a.id);
   ls.set('af_hist', JSON.stringify(h));
