@@ -82,6 +82,7 @@ dialog label{display:block;font-weight:700;margin:14px 0 6px}
 dialog ol{padding-left:20px;margin:6px 0}
 .hist{border-bottom:1px solid var(--soft);padding:10px 0}
 .hist p{margin:2px 0;font-size:14px}
+.lixo{margin-left:auto;border-color:var(--red);color:var(--red)}.lixo.confirma{background:var(--red);color:#fff}
 .hist .q{color:var(--mute);font-size:13px}
 .check{display:flex;gap:10px;align-items:center;font-weight:600;margin-top:12px}
 .check input{width:22px;height:22px}
@@ -96,7 +97,7 @@ footer{color:var(--mute);font-size:13px;margin-top:20px}
     <button type="button" class="icon" id="abrirHist" aria-label="Histórico e favoritos">🕘</button>
     <button type="button" class="icon" id="abrirConfig" aria-label="Configurações">⚙</button>
   </header>
-  <p class="lead">Compartilhe do WhatsApp ou Instagram → <b>Afiada</b>. Ele transcreve e já responde.</p>
+  <p class="lead">Compartilhe do WhatsApp ou Instagram → <b>Afiada</b>. Ele transcreve e espera o seu pensamento.</p>
 
   <div class="note" id="semChave" hidden>Falta a chave do Gemini. <button type="button" id="abrirConfig2">Colocar chave</button></div>
   <div class="note" id="instalar" hidden>Instale para aparecer no Compartilhar. <button type="button" id="btnInstalar">Instalar</button></div>
@@ -189,7 +190,7 @@ footer{color:var(--mute);font-size:13px;margin-top:20px}
     <button type="button" id="fecharConfig">Fechar</button>
   </div>
   <p class="hint" id="testeConfig"></p>
-  <p class="hint">Versão 6.2</p>
+  <p class="hint">Versão 6.3</p>
 </dialog>
 
 <dialog id="hist">
@@ -565,7 +566,7 @@ async function pegaCompartilhado() {
 
 /* ================= Rascunho ================= */
 // Abre sempre zerado. Só recupera o rascunho se o app fechou sem querer há menos de 10 minutos (ex.: o Android fechou ao trocar de app).
-const VERSAO = '6.2';
+const VERSAO = '6.3';
 const rascunhoRecente = Date.now() - (+ls.get('af_rasc_t') || 0) < 10 * 60 * 1000 && ls.get('af_versao') === VERSAO;
 if (rascunhoRecente) { chegou.value = ls.get('af_chegou'); posicao.value = ls.get('af_pos'); $('quem').value = ls.get('af_quem'); $('destino').value = ls.get('af_destino'); }
 else { ['af_chegou', 'af_pos', 'af_quem', 'af_destino'].forEach(k => ls.set(k, '')); }
@@ -840,8 +841,8 @@ function desenhaHist() {
   const h = lerHist().filter(x => filtroHist === 'todos' || x.versoes?.some(v => v.fav));
   $('listaHist').innerHTML = h.length ? h.map(x => {
     const vs = filtroHist === 'fav' ? x.versoes.filter(v => v.fav) : x.versoes;
-    return `<div class="hist"><p class="q">${new Date(x.id).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' })} · ${esc(PLATEIAS[x.plateia]?.nome || '')}${x.quem ? ' · ' + esc(x.quem) : ''}</p><p>${esc((x.entendi || x.entrada || '').slice(0, 140))}</p><div class="row" style="margin-top:6px"><button type="button" data-abre="${x.id}">Abrir ${vs.length} resposta${vs.length > 1 ? 's' : ''}</button></div></div>`;
-  }).join('') : `<p class="hint" style="margin-top:14px">${filtroHist === 'fav' ? 'Toque na ☆ de uma resposta para guardar aqui.' : 'Suas respostas aparecem aqui.'}</p>`;
+    return `<div class="hist"><p class="q">${new Date(x.id).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' })} · ${esc(PLATEIAS[x.plateia]?.nome || '')}${x.quem ? ' · ' + esc(x.quem) : ''}</p><p>${esc((x.entendi || x.entrada || '').slice(0, 140))}</p><div class="row" style="margin-top:6px"><button type="button" data-abre="${x.id}">Abrir ${vs.length} resposta${vs.length > 1 ? 's' : ''}</button><button type="button" class="lixo" data-apaga="${x.id}" aria-label="Apagar esta conversa">🗑</button></div></div>`;
+  }).join('') + `<div class="row" style="margin-top:16px"><button type="button" class="lixo" id="apagaTudo">🗑 Apagar todo o histórico</button></div>` : `<p class="hint" style="margin-top:14px">${filtroHist === 'fav' ? 'Toque na ☆ de uma resposta para guardar aqui.' : 'Suas respostas aparecem aqui.'}</p>`;
 }
 $('abrirHist').addEventListener('click', () => { desenhaHist(); $('hist').showModal(); });
 $('fecharHist').addEventListener('click', () => $('hist').close());
@@ -849,7 +850,15 @@ document.querySelectorAll('#hist [data-h]').forEach(b => b.addEventListener('cli
   filtroHist = b.dataset.h; document.querySelectorAll('#hist [data-h]').forEach(x => x.setAttribute('aria-pressed', String(x === b))); desenhaHist();
 }));
 $('listaHist').addEventListener('click', e => {
-  const id = +e.target.dataset.abre; if (!id) return;
+  const b = e.target.closest('button'); if (!b) return;
+  if (b.dataset.apaga || b.id === 'apagaTudo') {
+    if (!b.classList.contains('confirma')) { b.classList.add('confirma'); b.dataset.txt = b.textContent; b.textContent = b.id === 'apagaTudo' ? 'Toque de novo para apagar TUDO' : 'Apagar?'; setTimeout(() => { if (b.isConnected) { b.classList.remove('confirma'); b.textContent = b.dataset.txt; } }, 3000); return; }
+    if (b.id === 'apagaTudo') ls.set('af_hist', '[]');
+    else ls.set('af_hist', JSON.stringify(lerHist().filter(x => x.id !== +b.dataset.apaga)));
+    if (ultimo && (b.id === 'apagaTudo' || ultimo.id === +b.dataset.apaga)) { ultimo = null; saida.innerHTML = ''; }
+    desenhaHist(); return;
+  }
+  const id = +b.dataset.abre; if (!id) return;
   const x = lerHist().find(y => y.id === id); if (!x) return;
   ultimo = x; $('hist').close(); desenha(x); saida.scrollIntoView({ behavior: 'smooth' });
 });
