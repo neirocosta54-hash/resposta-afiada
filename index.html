@@ -142,6 +142,11 @@ footer{color:var(--mute);font-size:13px;margin-top:20px}
         <button type="button" class="chip" data-v="equilibrado">Equilibrado</button>
         <button type="button" class="chip" data-v="duro">Firme e duro</button>
       </div>
+      <label class="hint" style="display:block;margin-top:14px;font-weight:700">Nível da conversa</label>
+      <div class="row" id="niveis" style="margin-top:0">
+        <button type="button" class="chip" data-n="culto">🎓 Culto (embasado)</button>
+        <button type="button" class="chip" data-n="popular">🗣 Popular</button>
+      </div>
       <label class="check"><input type="checkbox" id="optWeb"> 🔎 Pesquisar na web para embasar</label>
       <label class="check"><input type="checkbox" id="optHist"> 👤 Usar minha história pessoal</label>
       <label for="posicao" id="rotPosicao" class="hint" style="display:block;margin-top:14px;font-weight:700">Sua opinião (opcional)</label>
@@ -175,7 +180,7 @@ footer{color:var(--mute);font-size:13px;margin-top:20px}
     <button type="button" id="fecharConfig">Fechar</button>
   </div>
   <p class="hint" id="testeConfig"></p>
-  <p class="hint">Versão 5.3</p>
+  <p class="hint">Versão 5.4</p>
 </dialog>
 
 <dialog id="hist">
@@ -324,6 +329,10 @@ $('selVoz').addEventListener('change', e => { voz = e.target.value; ls.set('af_v
 document.querySelectorAll('#tons .chip').forEach(b => b.addEventListener('click', () => { tom = b.dataset.v; ls.set('af_tom5', tom); pintaOpcoes(); }));
 pintaOpcoes();
 pintaModo();
+let nivel = ls.get('af_nivel') === 'popular' ? 'popular' : 'culto';
+function pintaNivel() { document.querySelectorAll('#niveis .chip').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.n === nivel))); }
+document.querySelectorAll('#niveis .chip').forEach(b => b.addEventListener('click', () => { nivel = b.dataset.n; ls.set('af_nivel', nivel); pintaNivel(); }));
+pintaNivel();
 $('optWeb').checked = ls.get('af_web') !== 'nao';
 $('optHist').checked = ls.get('af_historia') === 'sim';
 $('optWeb').addEventListener('change', e => ls.set('af_web', e.target.checked ? 'sim' : 'nao'));
@@ -626,6 +635,10 @@ TOM: ${TONS[tom]}
 ${ls.get('af_web') !== 'nao' ? `PESQUISA: antes de escrever, pesquise na web (Google) o assunto da conversa: fatos atuais, números oficiais, notícias recentes, o que diz a lei e o que especialistas dizem. Use o que encontrar para dar SOLIDEZ às respostas. Prefira fontes oficiais e jornais conhecidos. Se a pesquisa não confirmar algo, não afirme.
 
 ` : ''}EMBASAMENTO: além das respostas, monte um kit de munição sobre o assunto, com 3 a 5 itens variados escolhidos entre: "Fato do momento" (dado ou notícia atual verificada), "Ângulo jurídico" (o que a lei diz, só se for pertinente e real), "Analogia" (comparação nova ligada ao assunto), "Pensador" (um pensador, jurista, economista ou líder que tem uma ideia útil aqui, inclusive um CONTRAPONTO à ideia do outro lado; só ideia real, citação só se tiver certeza), "Contra-argumento" (o que o outro lado pode rebater e como responder).
+
+NÍVEL: ${(ls.get('af_nivel') || 'culto') === 'popular' ? 'Popular: linguagem simples do povo, sem termos técnicos, mas com os fatos certos.' : 'Culto. O grupo tem gente que lê e estuda: a resposta tem que mostrar conhecimento de verdade, nunca opinião solta. Ancore cada versão em pelo menos um elemento concreto e verificável: programa, lei, dado oficial (IBGE, IPEA, Banco Central, TCU, ministérios), estudo acadêmico, autor ou conceito de ciência política, economia, direito ou filosofia. Nomeie a fonte no texto de forma natural ("segundo o IBGE…", "como mostra o estudo do Ipea…"). Vocabulário preciso, mas frases claras e curtas: sabedoria, não pedantismo.'}
+
+DEFESA DE UM LADO: se a opinião do Neiron defende ou critica uma pessoa, governo, partido ou política pública, pesquise e use os exemplos concretos e reais a favor da posição DELE (programas, leis, obras, indicadores, resultados com números e período). Trate qualquer lado com o mesmo rigor: se ele defende Fulano, mostre onde Fulano acertou de verdade; se critica, mostre o que de fato deu errado. Não invente números nem misture governos. Seja honesto no campo "cuidado" sobre o ponto fraco do lado defendido. Se não houver opinião, cada caminho também precisa de fato concreto.
 
 VARIEDADE: cada resposta tem que nascer do assunto específico da conversa. Não use imagens prontas, não repita comparações. ${ultimasImagens() ? `Evite estas imagens e técnicas usadas recentemente: ${ultimasImagens()}.` : ''}
 
