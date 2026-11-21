@@ -97,7 +97,8 @@ footer{color:var(--mute);font-size:13px;margin-top:20px}
   <div class="note" id="instalar" hidden>Instale para aparecer no Compartilhar. <button type="button" id="btnInstalar">Instalar</button></div>
 
   <section class="box">
-    <h2>O que chegou</h2>
+    <h2>O que chegou <span style="font-weight:600;color:var(--mute);font-size:14px">(de outra pessoa)</span></h2>
+    <input type="text" id="quem" placeholder="Quem mandou? Ex.: Felipe do Gás (opcional)" autocomplete="off" style="margin-bottom:8px">
     <audio id="player" controls hidden></audio>
     <video id="video" controls hidden playsinline></video>
     <p class="wait" id="statusMidia" hidden></p>
@@ -166,7 +167,7 @@ footer{color:var(--mute);font-size:13px;margin-top:20px}
     <button type="button" id="fecharConfig">Fechar</button>
   </div>
   <p class="hint" id="testeConfig"></p>
-  <p class="hint">Versão 5</p>
+  <p class="hint">Versão 5.1</p>
 </dialog>
 
 <dialog id="hist">
@@ -418,8 +419,8 @@ function desenhaAnexos() {
 }
 $('lista').addEventListener('click', e => { const i = e.target.dataset.i; if (i !== undefined) { anexos.splice(+i, 1); desenhaAnexos(); } });
 
-const PEDIDO_AUDIO = 'Transcreva fielmente este áudio de WhatsApp em português do Brasil. Mantenha as palavras de quem fala, só com pontuação. Se houver mais de uma pessoa, separe por "Pessoa 1:", "Pessoa 2:". Responda apenas com a transcrição.';
-const PEDIDO_VIDEO = 'Este é um vídeo (de WhatsApp, Instagram ou outra rede). 1) Transcreva fielmente tudo o que é falado, em português do Brasil; se houver mais de uma pessoa, separe por "Pessoa 1:", "Pessoa 2:". 2) Se aparecer texto escrito na tela (legenda, manchete), copie também. 3) No fim, em uma linha começando com "Cena:", diga em poucas palavras quem aparece e onde. Responda só com isso.';
+const PEDIDO_AUDIO = 'Transcreva fielmente este áudio de WhatsApp em português do Brasil. Mantenha as palavras de quem fala, só com pontuação. Não dê nome a quem fala e não invente quem é. Se houver mais de uma voz, separe por "Voz 1:", "Voz 2:". Responda apenas com a transcrição.';
+const PEDIDO_VIDEO = 'Este é um vídeo (de WhatsApp, Instagram ou outra rede). 1) Transcreva fielmente tudo o que é falado, em português do Brasil; não dê nome a quem fala; se houver mais de uma voz, separe por "Voz 1:", "Voz 2:". 2) Se aparecer texto escrito na tela (legenda, manchete), copie também. 3) No fim, em uma linha começando com "Cena:", diga em poucas palavras quem aparece e onde. Responda só com isso.';
 const status = t => { const s = $('statusMidia'); s.hidden = !t; s.textContent = t || ''; };
 
 async function transcreve(f, tipo) {
@@ -433,7 +434,7 @@ async function transcreve(f, tipo) {
     const parte = await parteMidia(f, tipo === 'video' ? tipoVideo(f) : tipoAudio(f), status);
     status(msg);
     const txt = await gemini([{ text: tipo === 'video' ? PEDIDO_VIDEO : PEDIDO_AUDIO }, parte], false);
-    chegou.value = (chegou.value.trim() ? chegou.value.trim() + '\n\n' : '') + (tipo === 'video' ? '🎬 ' : '🎧 ') + txt.trim();
+    chegou.value = (chegou.value.trim() ? chegou.value.trim() + '\n\n' : '') + (tipo === 'video' ? '🎬 Vídeo recebido: ' : '🎧 Áudio recebido: ') + txt.trim();
     salvar(); status('Transcrito ✓');
     return true;
   } catch (e) { status(''); mostraErro('Não consegui transcrever: ' + e.message); return false; }
@@ -460,7 +461,7 @@ async function trataLink(texto) {
   status('Assistindo o vídeo do YouTube e transcrevendo…');
   try {
     const txt = await gemini([{ text: PEDIDO_VIDEO }, { file_data: { file_uri: yt[0] } }], false);
-    chegou.value = chegou.value.trim() + '\n\n🎬 ' + txt.trim(); salvar(); status('Transcrito ✓');
+    chegou.value = chegou.value.trim() + '\n\n🎬 Vídeo recebido: ' + txt.trim(); salvar(); status('Transcrito ✓');
     return true;
   } catch (e) { status(''); mostraErro('Não consegui assistir o vídeo do YouTube: ' + e.message); return false; }
 }
@@ -491,11 +492,12 @@ async function pegaCompartilhado() {
 }
 
 /* ================= Rascunho ================= */
-chegou.value = ls.get('af_chegou'); posicao.value = ls.get('af_pos');
-function salvar() { ls.set('af_chegou', chegou.value); ls.set('af_pos', posicao.value); }
+chegou.value = ls.get('af_chegou'); posicao.value = ls.get('af_pos'); $('quem').value = ls.get('af_quem');
+function salvar() { ls.set('af_chegou', chegou.value); ls.set('af_pos', posicao.value); ls.set('af_quem', $('quem').value); }
+$('quem').addEventListener('input', () => salvar());
 chegou.addEventListener('input', salvar); posicao.addEventListener('input', salvar);
 function limparTudo(manterOpiniao) {
-  chegou.value = ''; if (!manterOpiniao) posicao.value = ''; anexos = []; desenhaAnexos(); saida.innerHTML = '';
+  chegou.value = ''; $('quem').value = ''; if (!manterOpiniao) posicao.value = ''; anexos = []; desenhaAnexos(); saida.innerHTML = '';
   $('player').hidden = true; $('video').hidden = true; $('avisoLink').hidden = true; status(''); salvar(); mostraErro('');
 }
 $('limpar').addEventListener('click', () => limparTudo(false));
@@ -523,13 +525,14 @@ $('mic').addEventListener('click', () => {
 });
 
 /* ================= Cérebro: o pedido ao Gemini ================= */
-const PERFIL = `QUEM FALA: Neiron Costa, 50 anos, empresário capixaba (logística e socorro automotivo desde 2005, a NF da Costa), produtor de café arábica no Caparaó, criado na roça em Minas Gerais, ex-vereador em Lajinha/MG, ativo na política do Espírito Santo e de Lajinha. Fala o português do povo, direto, sem palavra difícil. Gosta de frases curtas, ritmo de fala, imagem do dia a dia (roça, café, estrada, caminhão, oficina, família) e de história pessoal com emoção. Use dados da vida dele só quando ajudarem e nunca invente passagens da vida dele.`;
+const PERFIL = `QUEM VAI RESPONDER (o autor das respostas que você escreve): Neiron Costa, 50 anos, empresário capixaba (logística e socorro automotivo desde 2005, a NF da Costa), produtor de café arábica no Caparaó, criado na roça em Minas Gerais, ex-vereador em Lajinha/MG, ativo na política do Espírito Santo e de Lajinha. Fala o português do povo, direto, sem palavra difícil. Gosta de frases curtas, ritmo de fala, imagem do dia a dia (roça, café, estrada, caminhão, oficina, família) e de história pessoal com emoção. Use dados da vida dele só quando ajudarem e nunca invente passagens da vida dele.`;
 
 function montaPedido(opts = {}) {
   const pl = PLATEIAS[plateia];
   const e = ESTILOS.find(x => x.id === estilo);
   const v = VOZES.find(x => x.id === voz);
   const opiniao = posicao.value.trim();
+  const quem = $('quem').value.trim();
   const dna = ls.get('af_dna');
   const txts = anexos.filter(a => a.tipo === 'txt').map(a => `--- ${a.nome} ---\n${a.texto}`).join('\n\n');
   const caminhos = opiniao
@@ -554,7 +557,12 @@ REGRAS DE OURO:
 
 ${caminhos}
 
-O QUE CHEGOU (mensagem, conversa, transcrição de áudio ou vídeo):
+ATENÇÃO — QUEM É QUEM:
+- O material abaixo foi enviado por OUTRA PESSOA${quem ? ` (${quem})` : ''}, nunca pelo Neiron. O Neiron só recebeu e encaminhou para você.
+- As respostas são do Neiron PARA essa pessoa (ou comentando o que ela disse no grupo). Escreva em primeira pessoa como Neiron, falando com ${quem || 'quem mandou'}.
+- Nunca trate o material como se fosse fala do Neiron, nunca responda ao próprio Neiron e nunca chame o Neiron de "você".
+
+MATERIAL RECEBIDO DE ${quem ? quem.toUpperCase() : 'OUTRA PESSOA'} (mensagem, conversa, transcrição de áudio ou vídeo):
 ${chegou.value.trim() || '(veja os anexos)'}
 ${txts ? '\nCONVERSA EXPORTADA DO WHATSAPP:\n' + txts : ''}${anexos.some(a => a.tipo === 'img') ? '\nHá prints da conversa anexados; leia-os com atenção.' : ''}
 ${opiniao ? `\nOPINIÃO DO NEIRON:\n${opiniao}` : ''}
@@ -562,7 +570,7 @@ ${opiniao ? `\nOPINIÃO DO NEIRON:\n${opiniao}` : ''}
 TERMÔMETRO: avalie friamente se vale a pena responder neste grupo. "veredito" = "responder", "privado" (melhor falar no privado) ou "nao" (melhor não responder ou só reagir). "motivo" em 1 frase. "maioria" em 1 frase: como a maioria silenciosa do grupo está vendo o assunto.
 
 Responda SOMENTE com JSON:
-{"entendi":"1 frase: o que foi dito e por quem","termometro":{"veredito":"responder|privado|nao","motivo":"...","maioria":"..."},"versoes":[{"rotulo":"...","tecnica":"técnica usada em poucas palavras","texto":"..."},{"rotulo":"...","tecnica":"...","texto":"..."},{"rotulo":"...","tecnica":"...","texto":"..."}],"cuidado":"1 frase: o ponto fraco que alguém pode usar contra essas respostas","conceito":"${plateia === 'politica' ? 'conceito de Os Engenheiros do Caos usado ou relevante, em poucas palavras' : ''}"}`;
+{"entendi":"1 frase: o que ${quem || 'a outra pessoa'} disse","termometro":{"veredito":"responder|privado|nao","motivo":"...","maioria":"..."},"versoes":[{"rotulo":"...","tecnica":"técnica usada em poucas palavras","texto":"..."},{"rotulo":"...","tecnica":"...","texto":"..."},{"rotulo":"...","tecnica":"...","texto":"..."}],"cuidado":"1 frase: o ponto fraco que alguém pode usar contra essas respostas","conceito":"${plateia === 'politica' ? 'conceito de Os Engenheiros do Caos usado ou relevante, em poucas palavras' : ''}"}`;
 }
 
 /* ================= Gerar ================= */
@@ -578,7 +586,7 @@ async function roda(outra) {
     for (const a of anexos.filter(a => a.tipo === 'img')) parts.push({ inline_data: { mime_type: a.blob.type || 'image/jpeg', data: await paraBase64(a.blob) } });
     const txt = await gemini(parts, true);
     const r = JSON.parse(txt.slice(txt.indexOf('{'), txt.lastIndexOf('}') + 1));
-    r.id = Date.now(); r.plateia = plateia; r.entrada = chegou.value.trim().slice(0, 300); r.fav = false;
+    r.id = Date.now(); r.plateia = plateia; r.quem = $('quem').value.trim(); r.entrada = chegou.value.trim().slice(0, 300); r.fav = false;
     ultimo = r; guardaHist(r); desenha(r);
   } catch (e) {
     saida.innerHTML = '';
@@ -627,7 +635,7 @@ saida.addEventListener('click', async e => {
   const btn = e.target, antes = btn.textContent; btn.textContent = '…'; btn.disabled = true;
   try {
     const dna = ls.get('af_dna');
-    const novo = await gemini([{ text: `${PERFIL}\n${dna && aj === 'voz' ? `Exemplos de como o Neiron escreve:\n"""${dna}"""\n` : ''}\nContexto do grupo: ${PLATEIAS[ultimo.plateia || plateia].nome}.\nMensagem original que ele recebeu: ${ultimo.entrada}\n\nTexto atual da resposta:\n"""${v.texto}"""\n\nAJUSTE: ${AJUSTES[aj]}\nNão invente fatos nem citações. Responda só com o novo texto, pronto para colar no WhatsApp.` }], false, 0.8);
+    const novo = await gemini([{ text: `${PERFIL}\n${dna && aj === 'voz' ? `Exemplos de como o Neiron escreve:\n"""${dna}"""\n` : ''}\nContexto do grupo: ${PLATEIAS[ultimo.plateia || plateia].nome}.\nMensagem que ${ultimo.quem || 'outra pessoa'} mandou para o Neiron (a resposta é do Neiron para essa pessoa): ${ultimo.entrada}\n\nTexto atual da resposta:\n"""${v.texto}"""\n\nAJUSTE: ${AJUSTES[aj]}\nNão invente fatos nem citações. Responda só com o novo texto, pronto para colar no WhatsApp.` }], false, 0.8);
     v.texto = novo.trim().replace(/^"+|"+$/g, '');
     card.querySelector('.txt').textContent = v.texto;
     card.querySelector('[data-acao=wa]').href = 'https://wa.me/?text=' + encodeURIComponent(v.texto);
@@ -640,7 +648,7 @@ saida.addEventListener('click', async e => {
 function lerHist() { try { return JSON.parse(ls.get('af_hist') || '[]'); } catch (e) { return []; } }
 function guardaHist(r) {
   let h = lerHist().filter(x => x.id !== r.id);
-  h.unshift({ id: r.id, plateia: r.plateia, entrada: r.entrada, entendi: r.entendi, versoes: r.versoes, termometro: r.termometro, cuidado: r.cuidado, conceito: r.conceito });
+  h.unshift({ id: r.id, plateia: r.plateia, quem: r.quem, entrada: r.entrada, entendi: r.entendi, versoes: r.versoes, termometro: r.termometro, cuidado: r.cuidado, conceito: r.conceito });
   const favs = h.filter(x => x.versoes?.some(v => v.fav)), resto = h.filter(x => !x.versoes?.some(v => v.fav)).slice(0, 40);
   h = [...favs, ...resto].sort((a, b) => b.id - a.id);
   ls.set('af_hist', JSON.stringify(h));
@@ -650,7 +658,7 @@ function desenhaHist() {
   const h = lerHist().filter(x => filtroHist === 'todos' || x.versoes?.some(v => v.fav));
   $('listaHist').innerHTML = h.length ? h.map(x => {
     const vs = filtroHist === 'fav' ? x.versoes.filter(v => v.fav) : x.versoes;
-    return `<div class="hist"><p class="q">${new Date(x.id).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' })} · ${esc(PLATEIAS[x.plateia]?.nome || '')}</p><p>${esc((x.entendi || x.entrada || '').slice(0, 140))}</p><div class="row" style="margin-top:6px"><button type="button" data-abre="${x.id}">Abrir ${vs.length} resposta${vs.length > 1 ? 's' : ''}</button></div></div>`;
+    return `<div class="hist"><p class="q">${new Date(x.id).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' })} · ${esc(PLATEIAS[x.plateia]?.nome || '')}${x.quem ? ' · ' + esc(x.quem) : ''}</p><p>${esc((x.entendi || x.entrada || '').slice(0, 140))}</p><div class="row" style="margin-top:6px"><button type="button" data-abre="${x.id}">Abrir ${vs.length} resposta${vs.length > 1 ? 's' : ''}</button></div></div>`;
   }).join('') : `<p class="hint" style="margin-top:14px">${filtroHist === 'fav' ? 'Toque na ☆ de uma resposta para guardar aqui.' : 'Suas respostas aparecem aqui.'}</p>`;
 }
 $('abrirHist').addEventListener('click', () => { desenhaHist(); $('hist').showModal(); });
