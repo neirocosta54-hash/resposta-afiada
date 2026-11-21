@@ -180,7 +180,7 @@ footer{color:var(--mute);font-size:13px;margin-top:20px}
     <button type="button" id="fecharConfig">Fechar</button>
   </div>
   <p class="hint" id="testeConfig"></p>
-  <p class="hint">Versão 5.4</p>
+  <p class="hint">Versão 5.5</p>
 </dialog>
 
 <dialog id="hist">
@@ -647,7 +647,7 @@ REGRAS DE OURO:
 - Citações e versículos só se forem reais e com autor/referência corretos.
 - Sem ataque pessoal, xingamento, preconceito ou ofensa à família de ninguém. A crítica mira a prática, não a pessoa.
 - Português do Brasil, frases curtas, pronto para colar no WhatsApp. No máximo 1 emoji por versão, e só se combinar com o grupo.
-- Escreva como pessoa, não como robô: nada de "Prezado interlocutor", nada de listas com marcadores na resposta.${opts.outra ? `\n- Faça versões NOVAS e diferentes destas já usadas: ${opts.outra}` : ''}
+- FORMATO WHATSAPP HUMANO (obrigatório em todas as versões): texto digitado por uma pessoa de verdade no celular, com experiência, ética e responsabilidade, falando em primeira pessoa. Parágrafos curtos de 1 a 3 frases separados por linha em branco. Sem títulos, sem tópicos, sem listas, sem numeração, sem markdown, sem asterisco duplo, sem travessão longo (—), sem ponto e vírgula, sem aspas curvas. Se quiser destacar UMA palavra, use o negrito do WhatsApp com um asterisco de cada lado (*assim*), no máximo uma vez. Proibido: "Prezado", "Caro interlocutor", "Em suma", "Além disso", "Vale ressaltar", "É importante destacar", "Nesse sentido", "Por fim", "Em conclusão", "Espero ter ajudado". Use conectivos de conversa real quando couber ("Olha", "Veja bem", "Pois é", "Agora, ", "Só que"), sem exagerar. Fontes são citadas no meio da frase, do jeito que a gente fala ("o IBGE mostrou que…"), nunca com link ou referência formal. Não termine com pergunta genérica nem com resumo. Varie o começo: não comece todas as versões pelo nome da pessoa.${opts.outra ? `\n- Faça versões NOVAS e diferentes destas já usadas: ${opts.outra}` : ''}
 
 ${caminhos}
 
@@ -655,6 +655,23 @@ ${termo}
 
 Responda SOMENTE com JSON:
 {"entendi":"${entendi}","termometro":{"veredito":"responder|privado|nao","motivo":"...","maioria":"..."},"versoes":[{"rotulo":"...","tecnica":"técnica usada em poucas palavras","texto":"..."},{"rotulo":"...","tecnica":"...","texto":"..."},{"rotulo":"...","tecnica":"...","texto":"..."}],"embasamento":[{"tipo":"Fato do momento|Ângulo jurídico|Analogia|Pensador|Contra-argumento","texto":"1 a 3 frases"}],"cuidado":"1 frase: o ponto fraco que alguém pode usar contra essas respostas","conceito":"${plateia === 'politica' ? 'conceito de Os Engenheiros do Caos usado ou relevante, em poucas palavras' : ''}"}`;
+}
+
+/* ================= Limpeza: cara de WhatsApp ================= */
+function humaniza(t) {
+  return String(t || '')
+    .replace(/\r/g, '')
+    .replace(/\*\*(.+?)\*\*/g, '*$1*')
+    .replace(/__(.+?)__/g, '_$1_')
+    .replace(/^#{1,6}\s*/gm, '')
+    .replace(/^\s*(?:[-•▪●]|\d+[.)])\s+/gm, '')
+    .replace(/\s*—\s*/g, ', ')
+    .replace(/\s+–\s+/g, ', ')
+    .replace(/[“”]/g, '"').replace(/[‘’]/g, "'")
+    .replace(/;\s+(\S)/g, (m, c) => '. ' + c.toUpperCase())
+    .replace(/,\s*,/g, ',')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
 }
 
 /* ================= Gerar ================= */
@@ -673,6 +690,7 @@ async function roda(outra) {
     const txt = await gemini(parts, true, undefined, busca);
     const r = JSON.parse(txt.slice(txt.indexOf('{'), txt.lastIndexOf('}') + 1));
     r.fontes = busca ? ultimasFontes : [];
+    (r.versoes || []).forEach(v => { v.texto = humaniza(v.texto); });
     r.id = Date.now(); r.plateia = plateia; r.quem = $('quem').value.trim(); r.modo = modo; r.entrada = chegou.value.trim().slice(0, 300); r.fav = false;
     ultimo = r; guardaHist(r); desenha(r);
   } catch (e) {
@@ -723,8 +741,8 @@ saida.addEventListener('click', async e => {
   const btn = e.target, antes = btn.textContent; btn.textContent = '…'; btn.disabled = true;
   try {
     const dna = ls.get('af_dna');
-    const novo = await gemini([{ text: `${perfil()}\n${dna && aj === 'voz' ? `Exemplos de como o Neiron escreve:\n"""${dna}"""\n` : ''}\nContexto do grupo: ${PLATEIAS[ultimo.plateia || plateia].nome}.\n${ultimo.modo === 'revisar' ? 'O texto abaixo é uma resposta do próprio Neiron.' : `Mensagem que ${ultimo.quem || 'outra pessoa'} mandou para o Neiron (o Neiron NÃO é o autor dela): ${ultimo.entrada}. A resposta abaixo é do Neiron para essa pessoa.`}\n\nTexto atual da resposta:\n"""${v.texto}"""\n\nAJUSTE: ${AJUSTES[aj]}\nNão invente fatos nem citações. Responda só com o novo texto, pronto para colar no WhatsApp.` }], false, 0.8);
-    v.texto = novo.trim().replace(/^"+|"+$/g, '');
+    const novo = await gemini([{ text: `${perfil()}\n${dna && aj === 'voz' ? `Exemplos de como o Neiron escreve:\n"""${dna}"""\n` : ''}\nContexto do grupo: ${PLATEIAS[ultimo.plateia || plateia].nome}.\n${ultimo.modo === 'revisar' ? 'O texto abaixo é uma resposta do próprio Neiron.' : `Mensagem que ${ultimo.quem || 'outra pessoa'} mandou para o Neiron (o Neiron NÃO é o autor dela): ${ultimo.entrada}. A resposta abaixo é do Neiron para essa pessoa.`}\n\nTexto atual da resposta:\n"""${v.texto}"""\n\nAJUSTE: ${AJUSTES[aj]}\nNão invente fatos nem citações. Mantenha o formato de mensagem de WhatsApp digitada por uma pessoa: parágrafos curtos, sem tópicos, sem markdown, sem travessão. Responda só com o novo texto.` }], false, 0.8);
+    v.texto = humaniza(novo.trim().replace(/^"+|"+$/g, ''));
     card.querySelector('.txt').textContent = v.texto;
     card.querySelector('[data-acao=wa]').href = 'https://wa.me/?text=' + encodeURIComponent(v.texto);
     guardaHist(ultimo);
