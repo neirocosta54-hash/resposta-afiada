@@ -189,7 +189,7 @@ footer{color:var(--mute);font-size:13px;margin-top:20px}
     <button type="button" id="fecharConfig">Fechar</button>
   </div>
   <p class="hint" id="testeConfig"></p>
-  <p class="hint">Versão 6.1</p>
+  <p class="hint">Versão 6.2</p>
 </dialog>
 
 <dialog id="hist">
@@ -564,8 +564,13 @@ async function pegaCompartilhado() {
 }
 
 /* ================= Rascunho ================= */
-chegou.value = ls.get('af_chegou'); posicao.value = ls.get('af_pos'); $('quem').value = ls.get('af_quem'); $('destino').value = ls.get('af_destino');
-function salvar() { ls.set('af_chegou', chegou.value); ls.set('af_pos', posicao.value); ls.set('af_quem', $('quem').value); ls.set('af_destino', $('destino').value); }
+// Abre sempre zerado. Só recupera o rascunho se o app fechou sem querer há menos de 10 minutos (ex.: o Android fechou ao trocar de app).
+const VERSAO = '6.2';
+const rascunhoRecente = Date.now() - (+ls.get('af_rasc_t') || 0) < 10 * 60 * 1000 && ls.get('af_versao') === VERSAO;
+if (rascunhoRecente) { chegou.value = ls.get('af_chegou'); posicao.value = ls.get('af_pos'); $('quem').value = ls.get('af_quem'); $('destino').value = ls.get('af_destino'); }
+else { ['af_chegou', 'af_pos', 'af_quem', 'af_destino'].forEach(k => ls.set(k, '')); }
+ls.set('af_versao', VERSAO);
+function salvar() { ls.set('af_rasc_t', String(Date.now())); ls.set('af_chegou', chegou.value); ls.set('af_pos', posicao.value); ls.set('af_quem', $('quem').value); ls.set('af_destino', $('destino').value); }
 $('quem').addEventListener('input', () => salvar()); $('destino').addEventListener('input', () => salvar());
 chegou.addEventListener('input', salvar); posicao.addEventListener('input', salvar);
 function limparTudo(manterOpiniao) {
