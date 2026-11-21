@@ -190,7 +190,7 @@ footer{color:var(--mute);font-size:13px;margin-top:20px}
     <button type="button" id="fecharConfig">Fechar</button>
   </div>
   <p class="hint" id="testeConfig"></p>
-  <p class="hint">Versão 6.3</p>
+  <p class="hint">Versão 6.4</p>
 </dialog>
 
 <dialog id="hist">
@@ -206,8 +206,8 @@ footer{color:var(--mute);font-size:13px;margin-top:20px}
 <script>
 {
 const $ = id => document.getElementById(id);
-const MODELO_PADRAO = 'gemini-2.5-flash';
-const RESERVAS = ['gemini-flash-latest', 'gemini-2.5-flash', 'gemini-3.8-flash', 'gemini-flash-lite-latest', 'gemini-2.5-flash-lite'];
+const MODELO_PADRAO = 'gemini-flash-latest';
+const RESERVAS = ['gemini-flash-latest', 'gemini-3.5-flash', 'gemini-3.8-flash', 'gemini-flash-lite-latest', 'gemini-3.5-flash-lite', 'gemini-2.5-flash'];
 const chegou = $('chegou'), posicao = $('posicao'), saida = $('saida'), erro = $('erro'), gerar = $('gerar');
 let anexos = [], instalarEvt = null, ultimo = null;
 
@@ -351,7 +351,7 @@ $('optHist').addEventListener('change', e => ls.set('af_historia', e.target.chec
 
 /* ================= Configurações ================= */
 const chave = () => ls.get('af_chave').trim();
-const modelo = () => ls.get('af_modelo').trim() || MODELO_PADRAO;
+const modelo = () => { const m = ls.get('af_modelo').trim(); return !m || /^gemini-(1\.|2\.)/.test(m) ? MODELO_PADRAO : m; };
 const autoGerar = () => ls.get('af_auto2') === 'sim';
 function checaChave() { $('semChave').hidden = !!chave(); }
 function abrirConfig() { $('chave').value = chave(); $('modelo').value = modelo(); $('dna').value = ls.get('af_dna'); $('auto').checked = autoGerar(); $('testeConfig').textContent = ''; $('config').showModal(); }
@@ -409,9 +409,9 @@ async function gemini(parts, json, temp, busca) {
         espera = Math.max(espera, seg);
         continue; // cada modelo tem seu próprio limite: tenta o próximo
       }
-      if (r.status === 404 || r.status === 500 || r.status === 503 || /not found|not supported|high demand|overloaded|unavailable|try again|thinking|google_search|tool/i.test(ultimoErro)) continue;
+      if (r.status === 404 || r.status === 500 || r.status === 503 || /not found|not supported|no longer available|deprecated|update your code|high demand|overloaded|unavailable|try again|thinking|google_search|tool/i.test(ultimoErro)) continue;
       if (r.status === 400 && /api key/i.test(ultimoErro)) throw new Error('Chave do Gemini inválida.');
-      throw new Error(ultimoErro);
+      throw new Error('O Google recusou o pedido: ' + ultimoErro);
     }
     if (!limites) break;
     if (limiteDia && limiteDia === limites) throw new Error('Acabou a cota grátis de hoje do Gemini. Ela volta amanhã (ou dá para ativar o faturamento no AI Studio).');
@@ -566,7 +566,7 @@ async function pegaCompartilhado() {
 
 /* ================= Rascunho ================= */
 // Abre sempre zerado. Só recupera o rascunho se o app fechou sem querer há menos de 10 minutos (ex.: o Android fechou ao trocar de app).
-const VERSAO = '6.3';
+const VERSAO = '6.4';
 const rascunhoRecente = Date.now() - (+ls.get('af_rasc_t') || 0) < 10 * 60 * 1000 && ls.get('af_versao') === VERSAO;
 if (rascunhoRecente) { chegou.value = ls.get('af_chegou'); posicao.value = ls.get('af_pos'); $('quem').value = ls.get('af_quem'); $('destino').value = ls.get('af_destino'); }
 else { ['af_chegou', 'af_pos', 'af_quem', 'af_destino'].forEach(k => ls.set(k, '')); }
