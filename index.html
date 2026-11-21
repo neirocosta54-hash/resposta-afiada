@@ -180,7 +180,7 @@ footer{color:var(--mute);font-size:13px;margin-top:20px}
     <button type="button" id="fecharConfig">Fechar</button>
   </div>
   <p class="hint" id="testeConfig"></p>
-  <p class="hint">Versão 5.5</p>
+  <p class="hint">Versão 5.6</p>
 </dialog>
 
 <dialog id="hist">
@@ -361,37 +361,54 @@ checaChave();
 
 /* ================= Gemini ================= */
 let ultimasFontes = [];
+let avisoEspera = null; // função que mostra "esperando o Google…" na tela
+const dorme = ms => new Promise(r => setTimeout(r, ms));
 async function gemini(parts, json, temp, busca) {
   if (!chave()) { abrirConfig(); throw new Error('Coloque a chave do Gemini.'); }
   const tentar = [modelo(), ...RESERVAS.filter(m => m !== modelo())];
   let ultimoErro = null;
-  for (const m of tentar) {
-    const cfg = json && !busca ? { responseMimeType: 'application/json', temperature: temp ?? 0.9 } : { temperature: temp ?? (json ? 0.9 : 0.2) };
-    if (/^gemini-2\.5-flash/.test(m)) cfg.thinkingConfig = { thinkingBudget: 0 };
-    let r, d;
-    try {
-      r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${m}:generateContent`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'x-goog-api-key': chave() },
-        body: JSON.stringify(Object.assign({ contents: [{ role: 'user', parts }], generationConfig: cfg }, busca ? { tools: [{ google_search: {} }] } : {}))
-      });
-      d = await r.json().catch(() => ({}));
-    } catch (e) { throw new Error('Sem internet ou conexão fraca.'); }
-    if (r.ok) {
-      if (m !== modelo()) ls.set('af_modelo', m);
-      const txt = (d.candidates?.[0]?.content?.parts || []).map(p => p.text || '').join('');
-      const gm = d.candidates?.[0]?.groundingMetadata;
-      ultimasFontes = (gm?.groundingChunks || []).map(c => c.web).filter(Boolean).map(w => ({ titulo: w.title || w.uri, url: w.uri })).filter((f, i, a) => a.findIndex(x => x.titulo === f.titulo) === i).slice(0, 6);
-      if (!txt) throw new Error('O Gemini não devolveu texto. Tente de novo.');
-      return txt;
+  for (let rodada = 0; rodada < 3; rodada++) {
+    let espera = 0, limiteDia = 0, limites = 0;
+    for (const m of tentar) {
+      const cfg = json && !busca ? { responseMimeType: 'application/json', temperature: temp ?? 0.9 } : { temperature: temp ?? (json ? 0.9 : 0.2) };
+      if (/^gemini-2\.5-flash/.test(m)) cfg.thinkingConfig = { thinkingBudget: 0 };
+      let r, d;
+      try {
+        r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${m}:generateContent`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'x-goog-api-key': chave() },
+          body: JSON.stringify(Object.assign({ contents: [{ role: 'user', parts }], generationConfig: cfg }, busca ? { tools: [{ google_search: {} }] } : {}))
+        });
+        d = await r.json().catch(() => ({}));
+      } catch (e) { throw new Error('Sem internet ou conexão fraca.'); }
+      if (r.ok) {
+        if (m !== modelo() && !busca) ls.set('af_modelo', m);
+        const txt = (d.candidates?.[0]?.content?.parts || []).map(p => p.text || '').join('');
+        const gm = d.candidates?.[0]?.groundingMetadata;
+        ultimasFontes = (gm?.groundingChunks || []).map(c => c.web).filter(Boolean).map(w => ({ titulo: w.title || w.uri, url: w.uri })).filter((f, i, a) => a.findIndex(x => x.titulo === f.titulo) === i).slice(0, 6);
+        if (!txt) { ultimoErro = 'resposta vazia'; continue; }
+        return txt;
+      }
+      ultimoErro = d.error?.message || ('HTTP ' + r.status);
+      if (r.status === 429) {
+        limites++;
+        if (/per ?day|PerDay|daily/i.test(JSON.stringify(d.error || {}))) limiteDia++;
+        const info = (d.error?.details || []).find(x => /RetryInfo/.test(x['@type'] || ''));
+        const seg = parseFloat((info?.retryDelay || '').replace('s', '')) || 0;
+        espera = Math.max(espera, seg);
+        continue; // cada modelo tem seu próprio limite: tenta o próximo
+      }
+      if (r.status === 404 || r.status === 500 || r.status === 503 || /not found|not supported|high demand|overloaded|unavailable|try again|thinking|google_search|tool/i.test(ultimoErro)) continue;
+      if (r.status === 400 && /api key/i.test(ultimoErro)) throw new Error('Chave do Gemini inválida.');
+      throw new Error(ultimoErro);
     }
-    ultimoErro = d.error?.message || ('HTTP ' + r.status);
-    if (r.status === 404 || r.status === 500 || r.status === 503 || /not found|not supported|high demand|overloaded|unavailable|try again|thinking|google_search|tool/i.test(ultimoErro)) continue;
-    if (r.status === 429) throw new Error('Limite do Gemini atingido. Espere um minuto.');
-    if (r.status === 400 && /api key/i.test(ultimoErro)) throw new Error('Chave do Gemini inválida.');
-    throw new Error(ultimoErro);
+    if (!limites) break;
+    if (limiteDia && limiteDia === limites) throw new Error('Acabou a cota grátis de hoje do Gemini. Ela volta amanhã (ou dá para ativar o faturamento no AI Studio).');
+    const seg = Math.min(Math.max(Math.ceil(espera) || 20, 8), 60);
+    for (let t = seg; t > 0; t--) { if (avisoEspera) avisoEspera(`O Google pediu uma pausa. Tentando de novo em ${t}s…`); await dorme(1000); }
+    if (avisoEspera) avisoEspera('Tentando de novo…');
   }
-  throw new Error(/high demand|overloaded|unavailable/i.test(ultimoErro || '') ? 'O Google está sobrecarregado agora. Tente de novo em 1 minuto.' : (ultimoErro || 'Modelo indisponível.'));
+  throw new Error(/high demand|overloaded|unavailable/i.test(ultimoErro || '') ? 'O Google está sobrecarregado agora. Tente de novo em 1 minuto.' : /quota|rate|limit|exhaust/i.test(ultimoErro || '') ? 'O Google ainda está segurando as chamadas. Espere 1 minuto e toque em Gerar.' : (ultimoErro || 'Modelo indisponível.'));
 }
 const paraBase64 = blob => new Promise((ok, falha) => {
   const fr = new FileReader();
@@ -453,7 +470,7 @@ async function parteMidia(f, mime, aviso) {
 /* ================= Entrada: anexos, transcrição, links ================= */
 function desenhaAnexos() {
   const ic = { img: '🖼', audio: '🎧', video: '🎬', txt: '📄' };
-  $('lista').innerHTML = anexos.map((a, i) => `<span class="file">${ic[a.tipo]} ${esc(a.nome)} <button type="button" data-i="${i}">tirar</button></span>`).join('');
+  $('lista').innerHTML = anexos.map((a, i) => `<span class="file">${ic[a.tipo]} ${esc(a.nome)}${(a.tipo === 'audio' || a.tipo === 'video') && !a.transcrito ? ' <b style="color:var(--red)">não transcrito</b>' : ''} <button type="button" data-i="${i}">tirar</button></span>`).join('');
 }
 $('lista').addEventListener('click', e => { const i = e.target.dataset.i; if (i !== undefined) { anexos.splice(+i, 1); desenhaAnexos(); } });
 
@@ -461,7 +478,7 @@ const PEDIDO_AUDIO = 'Transcreva fielmente este áudio de WhatsApp em português
 const PEDIDO_VIDEO = 'Este é um vídeo (de WhatsApp, Instagram ou outra rede). 1) Transcreva fielmente tudo o que é falado, em português do Brasil; não dê nome a quem fala; se houver mais de uma voz, separe por "Voz 1:", "Voz 2:". 2) Se aparecer texto escrito na tela (legenda, manchete), copie também. 3) No fim, em uma linha começando com "Cena:", diga em poucas palavras quem aparece e onde. Responda só com isso.';
 const status = t => { const s = $('statusMidia'); s.hidden = !t; s.textContent = t || ''; };
 
-async function transcreve(f, tipo) {
+async function transcreve(f, tipo, anexo) {
   const pl = tipo === 'video' ? $('video') : $('player');
   $('player').hidden = true; $('video').hidden = true;
   pl.src = URL.createObjectURL(f); pl.hidden = false;
@@ -471,7 +488,9 @@ async function transcreve(f, tipo) {
     if (!chave()) throw new Error('coloque a chave do Gemini na engrenagem ⚙.');
     const parte = await parteMidia(f, tipo === 'video' ? tipoVideo(f) : tipoAudio(f), status);
     status(msg);
+    avisoEspera = status;
     const txt = await gemini([{ text: tipo === 'video' ? PEDIDO_VIDEO : PEDIDO_AUDIO }, parte], false);
+    if (anexo) { anexo.transcrito = true; desenhaAnexos(); }
     chegou.value = (chegou.value.trim() ? chegou.value.trim() + '\n\n' : '') + (modo === 'revisar' ? (tipo === 'video' ? '🎬 Meu vídeo: ' : '🎧 Meu áudio: ') : (tipo === 'video' ? '🎬 Vídeo recebido: ' : '🎧 Áudio recebido: ')) + txt.trim();
     salvar(); status('Transcrito ✓');
     return true;
@@ -480,8 +499,8 @@ async function transcreve(f, tipo) {
 async function recebe(files) {
   let ok = true;
   for (const f of files) {
-    if (ehVideo(f)) { anexos.push({ tipo: 'video', nome: f.name || 'vídeo', blob: f }); desenhaAnexos(); ok = await transcreve(f, 'video') && ok; }
-    else if (ehAudio(f)) { anexos.push({ tipo: 'audio', nome: f.name || 'áudio', blob: f }); desenhaAnexos(); ok = await transcreve(f, 'audio') && ok; }
+    if (ehVideo(f)) { const a = { tipo: 'video', nome: f.name || 'vídeo', blob: f }; anexos.push(a); desenhaAnexos(); ok = await transcreve(f, 'video', a) && ok; }
+    else if (ehAudio(f)) { const a = { tipo: 'audio', nome: f.name || 'áudio', blob: f }; anexos.push(a); desenhaAnexos(); ok = await transcreve(f, 'audio', a) && ok; }
     else if (ehImagem(f)) anexos.push({ tipo: 'img', nome: f.name || 'print', blob: f });
     else { const t = await f.text(); anexos.push({ tipo: 'txt', nome: f.name || 'conversa.txt', texto: t.slice(-20000) }); }
   }
@@ -572,7 +591,7 @@ function ultimasImagens() {
 }
 function blocoMaterial() {
   const txts = anexos.filter(a => a.tipo === 'txt').map(a => `--- ${a.nome} ---\n${a.texto}`).join('\n\n');
-  return `${chegou.value.trim() || '(o conteúdo está nos anexos)'}${txts ? '\n\nCONVERSA EXPORTADA DO WHATSAPP:\n' + txts : ''}${anexos.some(a => a.tipo === 'img') ? '\n\n(Há prints anexados; leia-os.)' : ''}`;
+  return `${chegou.value.trim() || '(o conteúdo está nos prints anexados)'}${txts ? '\n\nCONVERSA EXPORTADA DO WHATSAPP:\n' + txts : ''}${anexos.some(a => a.tipo === 'img') ? '\n\n(Há prints anexados; leia-os.)' : ''}`;
 }
 
 function montaPedido(opts = {}) {
@@ -680,7 +699,15 @@ function esqueleto() { saida.innerHTML = '<p class="wait" style="margin-top:14px
 async function roda(outra) {
   mostraErro('');
   if (!chegou.value.trim() && !anexos.length) return mostraErro('Compartilhe um áudio ou vídeo, cole a mensagem ou anexe um print.');
-  gerar.disabled = true; gerar.textContent = 'Escrevendo…'; esqueleto();
+  gerar.disabled = true;
+  const pendentes = anexos.filter(a => (a.tipo === 'audio' || a.tipo === 'video') && !a.transcrito);
+  for (const a of pendentes) {
+    gerar.textContent = 'Ouvindo…';
+    const ok = await transcreve(a.blob, a.tipo, a);
+    if (!ok) { gerar.disabled = false; gerar.textContent = 'Gerar resposta'; mostraErro('Ainda não consegui ouvir o ' + (a.tipo === 'video' ? 'vídeo' : 'áudio') + '. Não vou responder sem ouvir. Toque em Gerar de novo em instantes.'); return; }
+  }
+  gerar.textContent = 'Escrevendo…'; esqueleto();
+  avisoEspera = t => { const w = saida.querySelector('.wait'); if (w) w.textContent = t; };
   saida.scrollIntoView({ behavior: 'smooth', block: 'start' });
   try {
     const parts = [{ text: montaPedido({ outra: outra ? (ultimo?.versoes || []).map(v => v.tecnica).join('; ') : '' }) }];
