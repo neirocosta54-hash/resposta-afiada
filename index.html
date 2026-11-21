@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#111111">
+<title>Resposta Afiada</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..900&display=swap" rel="stylesheet">
+<style>
+:root{color-scheme:light dark;--bg:light-dark(#fff,#0e0e0e);--ink:light-dark(#111,#f2f2f2);--mute:light-dark(#5c5c5c,#a8a8a8);--line:light-dark(#111,#f2f2f2);--soft:light-dark(#f1f1f1,#1b1b1b);--red:#e4002b;--ok:#0a7a3d}
+*{box-sizing:border-box;min-width:0}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 Archivo,system-ui,sans-serif;overflow-x:clip}
+.wrap{max-width:760px;margin:0 auto;padding:16px max(5vw,16px) 64px}
+header{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:6px}
+h1{font-stretch:112%;font-weight:800;font-size:clamp(30px,8vw,46px);line-height:1.05;margin:0}
+h1 b{color:var(--red)}
+.lead{color:var(--mute);margin:4px 0 22px}
+.step{display:grid;grid-template-columns:44px minmax(0,1fr);gap:0 12px;border-top:4px solid var(--line);padding:16px 0 22px}
+.num{font-stretch:112%;font-weight:800;font-size:38px;line-height:1;color:var(--red)}
+h2{font-size:20px;font-weight:800;margin:2px 0 4px}
+.hint{color:var(--mute);font-size:14px;margin:0 0 10px}
+textarea,input[type=text],input[type=password]{width:100%;font:16px/1.5 Archivo,system-ui,sans-serif;color:var(--ink);background:var(--soft);border:2px solid transparent;border-radius:6px;padding:12px}
+textarea{resize:vertical}
+textarea:focus,input:focus,button:focus-visible,label.btn:focus-within{outline:3px solid var(--red);outline-offset:2px}
+.row{display:flex;flex-wrap:wrap;gap:10px;margin-top:10px;align-items:center}
+button,.btn,a.btn{font:700 15px Archivo,system-ui,sans-serif;min-height:44px;padding:0 16px;border-radius:6px;border:2px solid var(--line);background:transparent;color:var(--ink);cursor:pointer;display:inline-flex;align-items:center;gap:8px;text-decoration:none;position:relative}
+.btn input{position:absolute;opacity:0;width:1px;height:1px}
+.go{background:var(--red);border-color:var(--red);color:#fff;font-size:18px;min-height:56px;width:100%;justify-content:center;font-stretch:112%;font-weight:800}
+.go:disabled{opacity:.5}
+.chip[aria-pressed=true]{background:var(--ink);color:var(--bg)}
+.mic.on{background:var(--red);border-color:var(--red);color:#fff}
+.wa{background:#25d366;border-color:#25d366;color:#fff}
+.icon{width:44px;padding:0;justify-content:center;font-size:20px}
+audio{width:100%;margin-top:10px}
+.files{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+.file{background:var(--soft);border-radius:6px;padding:6px 10px;font-size:14px;display:flex;gap:8px;align-items:center}
+.file button{min-height:28px;padding:0 8px;border-width:1px;font-size:13px}
+.note{border-left:4px solid var(--red);padding:10px 12px;background:var(--soft);font-size:14px;margin-top:10px}
+.note.ok{border-color:var(--ok)}
+[hidden]{display:none!important}
+.meta{background:var(--ink);color:var(--bg);padding:14px 16px;border-radius:6px;margin:14px 0}
+.meta p{margin:4px 0}.meta small{opacity:.75;font-size:13px}
+.card{border:2px solid var(--line);border-radius:6px;padding:14px 16px;margin-bottom:14px}
+.card h3{margin:0 0 8px;font-size:15px;font-weight:800;color:var(--red)}
+.card .txt{white-space:pre-wrap;font-size:17px;line-height:1.5}
+.card .row{justify-content:flex-end}
+.err{color:var(--red);font-weight:600}
+.wait{color:var(--mute)}
+dialog{border:0;border-radius:10px;padding:20px;max-width:520px;width:calc(100% - 24px);background:var(--bg);color:var(--ink)}
+dialog::backdrop{background:#0009}
+dialog h2{margin-top:0}
+dialog label{display:block;font-weight:700;margin:14px 0 6px}
+dialog ol{padding-left:20px;margin:6px 0}
+footer{color:var(--mute);font-size:13px;margin-top:24px}
+@media(prefers-reduced-motion:no-preference){.card{animation:in .35s ease-out both}@keyframes in{from{opacity:0;transform:translateY(8px)}}}
+</style>
+</head>
+<body>
+<main class="wrap">
+  <header>
+    <h1>Resposta <b>afiada</b></h1>
+    <button type="button" class="icon" id="abrirConfig" aria-label="Configurações">⚙</button>
+  </header>
+  <p class="lead">No WhatsApp: segure o áudio ou a mensagem → Compartilhar → <b>Afiada</b>.</p>
+
+  <div class="note" id="semChave" hidden>Falta a chave do Gemini. <button type="button" id="abrirConfig2">Colocar chave</button></div>
+  <div class="note" id="instalar" hidden>Instale o app para ele aparecer no Compartilhar do WhatsApp. <button type="button" id="btnInstalar">Instalar</button></div>
+
+  <section class="step">
+    <div class="num">1</div>
+    <div>
+      <h2>O que chegou</h2>
+      <p class="hint">Chega sozinho quando você compartilha. Também dá para colar o texto ou anexar áudio, print ou conversa exportada (.txt).</p>
+      <audio id="player" controls hidden></audio>
+      <p class="wait" id="statusAudio" hidden></p>
+      <textarea id="chegou" rows="6" placeholder="Mensagem, notícia ou transcrição do áudio…"></textarea>
+      <div class="row">
+        <label class="btn">📎 Anexar
+          <input id="arq" type="file" multiple accept="audio/*,.opus,.ogg,.m4a,.mp3,.aac,image/*,.txt,text/plain">
+        </label>
+        <button type="button" id="limpar">Limpar tudo</button>
+      </div>
+      <div class="files" id="lista"></div>
+    </div>
+  </section>
+
+  <section class="step">
+    <div class="num">2</div>
+    <div>
+      <h2>Seu posicionamento</h2>
+      <p class="hint">Do seu jeito: o que você pensa, quem é o alvo, o que quer que o outro sinta.</p>
+      <textarea id="posicao" rows="4" placeholder="Ex.: Sou contra. Deixaram a estrada acabar e agora querem aplauso por um remendo na véspera da eleição."></textarea>
+      <div class="row">
+        <button type="button" class="mic" id="mic">🎙 Falar</button>
+        <span class="hint" id="micStatus"></span>
+      </div>
+    </div>
+  </section>
+
+  <section class="step">
+    <div class="num">3</div>
+    <div>
+      <h2>Para onde vai</h2>
+      <div class="row" id="destinos">
+        <button type="button" class="chip" aria-pressed="true" data-v="resposta de WhatsApp">WhatsApp</button>
+        <button type="button" class="chip" aria-pressed="false" data-v="trecho de discurso falado">Discurso</button>
+        <button type="button" class="chip" aria-pressed="false" data-v="post para Instagram e redes">Post</button>
+      </div>
+    </div>
+  </section>
+
+  <button type="button" class="btn go" id="gerar">Gerar resposta</button>
+  <p class="err" id="erro" hidden></p>
+  <div id="saida"></div>
+
+  <footer>Regra da casa: nada de fato inventado e nada de ataque pessoal. A ironia mira a prática, não a pessoa.</footer>
+</main>
+
+<dialog id="config">
+  <h2>Configurações</h2>
+  <p class="hint">A chave fica salva só neste celular.</p>
+  <ol class="hint">
+    <li>Abra <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">aistudio.google.com/apikey</a> com sua conta Google.</li>
+    <li>Toque em <b>Criar chave de API</b> e copie.</li>
+    <li>Cole abaixo e salve.</li>
+  </ol>
+  <label for="chave">Chave do Gemini</label>
+  <input type="password" id="chave" autocomplete="off" placeholder="AIza…">
+  <label for="modelo">Modelo (só mexa se der erro)</label>
+  <input type="text" id="modelo" autocomplete="off">
+  <div class="row">
+    <button type="button" class="go" id="salvarConfig" style="width:auto;flex:1">Salvar</button>
+    <button type="button" id="fecharConfig">Fechar</button>
+  </div>
+  <p class="hint" id="testeConfig"></p>
+</dialog>
+
+<script>
+{
+const $ = id => document.getElementById(id);
+const MODELO_PADRAO = 'gemini-3.8-flash';
+const RESERVAS = ['gemini-flash-latest', 'gemini-2.5-flash'];
+const chegou = $('chegou'), posicao = $('posicao'), saida = $('saida'), erro = $('erro'), gerar = $('gerar');
+let anexos = [], destino = 'resposta de WhatsApp', ultima = '', instalarEvt = null;
+
+const ls = {
+  get: k => { try { return localStorage.getItem(k) || ''; } catch (e) { return ''; } },
+  set: (k, v) => { try { localStorage.setItem(k, v); } catch (e) {} }
+};
+const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const mostraErro = t => { erro.hidden = !t; erro.textContent = t || ''; };
+
+/* ---------- Configurações ---------- */
+const chave = () => ls.get('af_chave').trim();
+const modelo = () => ls.get('af_modelo').trim() || MODELO_PADRAO;
+function checaChave() { $('semChave').hidden = !!chave(); }
+function abrirConfig() { $('chave').value = chave(); $('modelo').value = modelo(); $('testeConfig').textContent = ''; $('config').showModal(); }
+$('abrirConfig').addEventListener('click', abrirConfig);
+$('abrirConfig2').addEventListener('click', abrirConfig);
+$('fecharConfig').addEventListener('click', () => $('config').close());
+$('salvarConfig').addEventListener('click', async () => {
+  ls.set('af_chave', $('chave').value.trim());
+  ls.set('af_modelo', $('modelo').value.trim() || MODELO_PADRAO);
+  checaChave();
+  $('testeConfig').textContent = 'Testando…';
+  try { await gemini([{ text: 'Responda só: ok' }], false); $('testeConfig').textContent = 'Funcionando ✓'; setTimeout(() => $('config').close(), 700); }
+  catch (e) { $('testeConfig').textContent = 'Erro: ' + e.message; }
+});
+checaChave();
+
+/* ---------- Gemini ---------- */
+async function gemini(parts, json) {
+  if (!chave()) { abrirConfig(); throw new Error('Coloque a chave do Gemini.'); }
+  const tentar = [modelo(), ...RESERVAS.filter(m => m !== modelo())];
+  let ultimoErro = null;
+  for (const m of tentar) {
+    const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${m}:generateContent`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-goog-api-key': chave() },
+      body: JSON.stringify({
+        contents: [{ role: 'user', parts }],
+        generationConfig: json ? { responseMimeType: 'application/json', temperature: 0.9 } : { temperature: 0.2 }
+      })
+    });
+    const d = await r.json().catch(() => ({}));
+    if (r.ok) {
+      if (m !== modelo()) ls.set('af_modelo', m);
+      const txt = (d.candidates?.[0]?.content?.parts || []).map(p => p.text || '').join('');
+      if (!txt) throw new Error('O Gemini não devolveu texto. Tente de novo.');
+      return txt;
+    }
+    ultimoErro = d.error?.message || ('HTTP ' + r.status);
+    if (r.status === 404 || /not found|not supported/i.test(ultimoErro)) continue;
+    if (r.status === 429) throw new Error('Limite do Gemini atingido. Espere um minuto.');
+    if (r.status === 400 && /api key/i.test(ultimoErro)) throw new Error('Chave do Gemini inválida.');
+    throw new Error(ultimoErro);
+  }
+  throw new Error(ultimoErro || 'Modelo indisponível.');
+}
+const paraBase64 = blob => new Promise((ok, falha) => {
+  const fr = new FileReader();
+  fr.onload = () => ok(String(fr.result).split(',')[1]);
+  fr.onerror = falha;
+  fr.readAsDataURL(blob);
+});
+function tipoAudio(f) {
+  const n = (f.name || '').toLowerCase(), t = (f.type || '').toLowerCase();
+  if (/opus|ogg/.test(t) || /\.(opus|ogg)$/.test(n)) return 'audio/ogg';
+  if (/mpeg|mp3/.test(t) || n.endsWith('.mp3')) return 'audio/mp3';
+  if (/aac|m4a|mp4/.test(t) || /\.(m4a|aac|mp4)$/.test(n)) return 'audio/aac';
+  if (/wav/.test(t) || n.endsWith('.wav')) return 'audio/wav';
+  return t.startsWith('audio') ? t : 'audio/ogg';
+}
+const ehAudio = f => (f.type || '').startsWith('audio') || /\.(opus|ogg|m4a|mp3|aac|wav)$/i.test(f.name || '');
+const ehImagem = f => (f.type || '').startsWith('image');
+
+/* ---------- Anexos ---------- */
+function desenhaAnexos() {
+  $('lista').innerHTML = anexos.map((a, i) => `<span class="file">${a.tipo === 'img' ? '🖼' : a.tipo === 'audio' ? '🎧' : '📄'} ${esc(a.nome)} <button type="button" data-i="${i}">tirar</button></span>`).join('');
+}
+$('lista').addEventListener('click', e => { const i = e.target.dataset.i; if (i !== undefined) { anexos.splice(+i, 1); desenhaAnexos(); } });
+
+async function recebe(files) {
+  for (const f of files) {
+    if (ehAudio(f)) { anexos.push({ tipo: 'audio', nome: f.name || 'áudio', blob: f }); await transcreve(f); }
+    else if (ehImagem(f)) anexos.push({ tipo: 'img', nome: f.name || 'print', blob: f });
+    else { const t = await f.text(); anexos.push({ tipo: 'txt', nome: f.name || 'conversa.txt', texto: t.slice(-20000) }); }
+  }
+  desenhaAnexos();
+}
+$('arq').addEventListener('change', async e => { const fs = [...e.target.files]; e.target.value = ''; await recebe(fs); });
+
+async function transcreve(f) {
+  const st = $('statusAudio'), pl = $('player');
+  pl.src = URL.createObjectURL(f); pl.hidden = false;
+  st.hidden = false; st.textContent = 'Ouvindo o áudio e transcrevendo…';
+  mostraErro('');
+  try {
+    const b64 = await paraBase64(f);
+    const txt = await gemini([
+      { text: 'Transcreva fielmente este áudio de WhatsApp em português do Brasil. Mantenha as palavras de quem fala, só com pontuação. Se houver mais de uma pessoa, separe por "Pessoa 1:", "Pessoa 2:". Responda apenas com a transcrição.' },
+      { inline_data: { mime_type: tipoAudio(f), data: b64 } }
+    ], false);
+    chegou.value = (chegou.value.trim() ? chegou.value.trim() + '\n\n' : '') + '🎧 ' + txt.trim();
+    salvar();
+    st.textContent = 'Transcrito ✓ Confira e ajuste se precisar.';
+  } catch (e) {
+    st.textContent = '';
+    mostraErro('Não consegui transcrever: ' + e.message);
+  }
+}
+
+/* ---------- O que veio do Compartilhar ---------- */
+async function pegaCompartilhado() {
+  if (!new URLSearchParams(location.search).has('shared')) return;
+  history.replaceState(null, '', location.pathname);
+  try {
+    const c = await caches.open('afiada-shared');
+    const mr = await c.match('./shared/meta'); if (!mr) return;
+    const meta = await mr.json();
+    const files = [];
+    for (let i = 0; i < meta.n; i++) {
+      const r = await c.match('./shared/' + i); if (!r) continue;
+      const b = await r.blob();
+      files.push(new File([b], decodeURIComponent(r.headers.get('x-name') || 'arquivo'), { type: b.type || r.headers.get('content-type') || '' }));
+    }
+    for (const k of await c.keys()) await c.delete(k);
+    limparTudo();
+    const texto = [meta.title, meta.text, meta.url].filter(Boolean).join('\n').trim();
+    if (texto) { chegou.value = texto; salvar(); }
+    await recebe(files);
+    posicao.focus();
+  } catch (e) { mostraErro('Não consegui ler o que foi compartilhado. Tente anexar.'); }
+}
+
+/* ---------- Rascunho e destino ---------- */
+chegou.value = ls.get('af_chegou'); posicao.value = ls.get('af_pos');
+function salvar() { ls.set('af_chegou', chegou.value); ls.set('af_pos', posicao.value); }
+chegou.addEventListener('input', salvar); posicao.addEventListener('input', salvar);
+function limparTudo() { chegou.value = ''; posicao.value = ''; anexos = []; desenhaAnexos(); saida.innerHTML = ''; $('player').hidden = true; $('statusAudio').hidden = true; salvar(); mostraErro(''); }
+$('limpar').addEventListener('click', limparTudo);
+document.querySelectorAll('#destinos .chip').forEach(b => b.addEventListener('click', () => {
+  document.querySelectorAll('#destinos .chip').forEach(x => x.setAttribute('aria-pressed', 'false'));
+  b.setAttribute('aria-pressed', 'true'); destino = b.dataset.v;
+}));
+
+/* ---------- Ditado do posicionamento ---------- */
+const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+let rec = null, ouvindo = false;
+if (!SR) { $('mic').hidden = true; $('micStatus').textContent = 'Use o microfone do teclado para ditar.'; }
+$('mic').addEventListener('click', () => {
+  if (!SR) return;
+  if (ouvindo) { rec.stop(); return; }
+  rec = new SR(); rec.lang = 'pt-BR'; rec.continuous = true; rec.interimResults = true;
+  const base = posicao.value.trim();
+  let final = '';
+  rec.onresult = ev => {
+    let parcial = '';
+    for (let i = ev.resultIndex; i < ev.results.length; i++) {
+      if (ev.results[i].isFinal) final += ev.results[i][0].transcript + ' ';
+      else parcial += ev.results[i][0].transcript;
+    }
+    posicao.value = (base ? base + ' ' : '') + final + parcial;
+  };
+  rec.onstart = () => { ouvindo = true; $('mic').classList.add('on'); $('mic').textContent = '■ Parar'; $('micStatus').textContent = 'Ouvindo…'; };
+  rec.onend = () => { ouvindo = false; $('mic').classList.remove('on'); $('mic').textContent = '🎙 Falar'; $('micStatus').textContent = ''; posicao.value = posicao.value.trim(); salvar(); };
+  rec.onerror = ev => { $('micStatus').textContent = ev.error === 'not-allowed' ? 'Permita o microfone nas configurações.' : 'Não ouvi. Tente de novo.'; };
+  try { rec.start(); } catch (e) {}
+});
+
+/* ---------- Gerar ---------- */
+function prompt(outra) {
+  const txts = anexos.filter(a => a.tipo === 'txt').map(a => `--- ${a.nome} ---\n${a.texto}`).join('\n\n');
+  return `Você escreve respostas políticas e de debate em português do Brasil para Neiron Costa, empresário e produtor de café do Espírito Santo, com raízes em Lajinha/MG.
+
+TÉCNICA OBRIGATÓRIA: metáfora estendida com ironia (alegoria irônica), no molde de "O governo é muito bom em uma coisa: ele quebra suas pernas para te dar uma muleta e diz 'viu? Sem nossa ajuda, você não andaria'". Ingredientes:
+1. Falso elogio de abertura ("X é ótimo em uma coisa…").
+2. Uma imagem física do dia a dia (roça, estrada, oficina, caminhão, família, café…) que traduz o problema.
+3. Personificação: o alvo ganha voz.
+4. Fecho com a fala do alvo entre aspas, mostrando a arrogância (sermocinação).
+
+REGRAS:
+- Siga fielmente o posicionamento do Neiron. Não mude o lado dele.
+- Mire uma prática ou decisão concreta, não "o governo" em geral, para não ser derrubado com um contraexemplo.
+- Não invente fatos, números, nomes ou acusações que não estejam no material. Sem ataque pessoal, xingamento ou ofensa à família de ninguém.
+- Frases curtas, ritmo de fala, linguagem simples do povo.
+- Destino: ${destino}.${outra ? `\n- Use uma metáfora DIFERENTE desta, já usada: ${outra}` : ''}
+
+O QUE CHEGOU (mensagem, conversa ou transcrição de áudio):
+${chegou.value.trim() || '(veja os anexos)'}
+${txts ? '\nCONVERSA EXPORTADA DO WHATSAPP:\n' + txts : ''}
+${anexos.some(a => a.tipo === 'img') ? '\nHá prints da conversa anexados; leia-os.' : ''}
+
+POSICIONAMENTO DO NEIRON:
+${posicao.value.trim()}
+
+Responda SOMENTE com JSON neste formato:
+{"entendi":"1 frase dizendo o que o outro lado disse","metafora":"a imagem escolhida em poucas palavras","versoes":[{"titulo":"Firme e direta","texto":"..."},{"titulo":"Analítica","texto":"..."},{"titulo":"Curta para redes","texto":"até 280 caracteres"}],"cuidado":"1 frase: o ponto fraco que o outro lado pode usar contra essa resposta"}`;
+}
+
+function desenha(r) {
+  ultima = r.metafora || '';
+  saida.innerHTML = `<div class="meta"><p><small>O que chegou</small><br>${esc(r.entendi || '')}</p><p><small>Imagem usada</small><br>${esc(r.metafora || '')}</p></div>` +
+    (r.versoes || []).map((v, i) => `<div class="card"><h3>${esc(v.titulo)}</h3><div class="txt" id="v${i}">${esc(v.texto)}</div><div class="row"><button type="button" data-c="v${i}">Copiar</button><a class="btn wa" href="https://wa.me/?text=${encodeURIComponent(v.texto)}" target="_blank" rel="noopener">WhatsApp</a></div></div>`).join('') +
+    (r.cuidado ? `<div class="note"><b>Cuidado:</b> ${esc(r.cuidado)}</div>` : '') +
+    `<div class="row"><button type="button" id="outra">Outra metáfora</button></div>`;
+  $('outra').addEventListener('click', () => roda(true));
+  saida.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+saida.addEventListener('click', async e => {
+  const id = e.target.dataset.c; if (!id) return;
+  try { await navigator.clipboard.writeText($(id).textContent); e.target.textContent = 'Copiado ✓'; }
+  catch (x) { e.target.textContent = 'Segure o texto para copiar'; }
+  setTimeout(() => e.target.textContent = 'Copiar', 1800);
+});
+
+async function roda(outra) {
+  mostraErro('');
+  if (!chegou.value.trim() && !anexos.length) return mostraErro('Compartilhe um áudio, cole a mensagem ou anexe a conversa.');
+  if (!posicao.value.trim()) { posicao.focus(); return mostraErro('Diga seu posicionamento no passo 2.'); }
+  gerar.disabled = true; gerar.textContent = 'Escrevendo…';
+  saida.innerHTML = '<p class="wait">Pensando na melhor imagem…</p>';
+  try {
+    const parts = [{ text: prompt(outra ? ultima : '') }];
+    for (const a of anexos.filter(a => a.tipo === 'img')) parts.push({ inline_data: { mime_type: a.blob.type || 'image/jpeg', data: await paraBase64(a.blob) } });
+    const txt = await gemini(parts, true);
+    desenha(JSON.parse(txt.slice(txt.indexOf('{'), txt.lastIndexOf('}') + 1)));
+  } catch (e) {
+    saida.innerHTML = '';
+    mostraErro(e instanceof SyntaxError ? 'A resposta veio quebrada. Tente de novo.' : e.message);
+  } finally { gerar.disabled = false; gerar.textContent = 'Gerar resposta'; }
+}
+gerar.addEventListener('click', () => roda(false));
+
+/* ---------- Instalar ---------- */
+window.addEventListener('beforeinstallprompt', e => { e.preventDefault(); instalarEvt = e; $('instalar').hidden = false; });
+$('btnInstalar').addEventListener('click', async () => { if (!instalarEvt) return; instalarEvt.prompt(); await instalarEvt.userChoice; instalarEvt = null; $('instalar').hidden = true; });
+if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').then(() => navigator.serviceWorker.ready).then(pegaCompartilhado).catch(pegaCompartilhado);
+else pegaCompartilhado();
+}
+</script>
+</body>
+</html>
