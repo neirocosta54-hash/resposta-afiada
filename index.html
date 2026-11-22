@@ -65,6 +65,12 @@ details.mais[open] summary::before{content:'–'}
 .card .ajustes{justify-content:flex-start;border-top:1px dashed var(--mute);padding-top:10px}
 .card .ajustes button{min-height:36px;font-size:13px;padding:0 10px;border-width:1px}
 #modos .chip{justify-content:center;font-size:14px;padding:0 6px;min-height:50px;text-align:center}
+.rolo{display:flex;gap:8px;overflow-x:auto;scroll-snap-type:x proximity;padding:2px 2px 10px;margin:0 -2px;scrollbar-width:thin;-webkit-overflow-scrolling:touch}
+.rolo button{flex:none;scroll-snap-align:start;min-height:64px;min-width:92px;max-width:150px;flex-direction:column;justify-content:center;gap:2px;padding:6px 10px;font-size:13px;line-height:1.15;text-align:center;white-space:normal}
+.rolo button span{font-size:20px}
+.rolo button[aria-pressed=true]{background:var(--ink);color:var(--bg)}
+.rolo button.forte[aria-pressed=true]{background:var(--red);border-color:var(--red);color:#fff}
+.deslize{font-size:12px;font-weight:600;color:var(--mute);margin-left:6px}
 .passo{display:inline-grid;place-items:center;width:28px;height:28px;border-radius:50%;background:var(--red);color:#fff;font-size:15px;margin-right:6px;vertical-align:2px}
 .mic-grande{background:var(--ink);color:var(--bg);min-height:52px;font-size:16px}
 .mic-grande.on{background:var(--red);border-color:var(--red);color:#fff}
@@ -142,13 +148,22 @@ footer{color:var(--mute);font-size:13px;margin-top:20px}
       <button type="button" data-p="amigos"><span>☕</span>Dia a dia</button>
     </div>
 
+  </section>
+
+  <section class="box">
+    <h2><span class="passo">4</span> Formato <span class="deslize">deslize →</span></h2>
+    <div class="rolo" id="formatos"></div>
+    <p class="desc" id="descFormato"></p>
+
+    <h2 style="margin-top:18px">Estilo <span class="deslize">deslize →</span></h2>
+    <div class="rolo" id="estilos"></div>
+    <p class="desc" id="descEstilo"></p>
+
+    <h2 style="margin-top:18px">Na voz de <span class="deslize">deslize →</span></h2>
+    <div class="rolo" id="vozes"></div>
+
     <details class="mais" id="maisOpcoes">
-      <summary>Ajustar estilo, voz e tom</summary>
-      <div class="grid2" style="margin-top:8px">
-        <div><label for="selEstilo">Estilo</label><select id="selEstilo"></select></div>
-        <div><label for="selVoz">Na voz de</label><select id="selVoz"></select></div>
-      </div>
-      <p class="desc" id="descEstilo"></p>
+      <summary>Tom, nível e pesquisa</summary>
       <label class="hint" style="display:block;margin-top:12px;font-weight:700">Tom</label>
       <div class="row" id="tons" style="margin-top:0">
         <button type="button" class="chip" data-v="respeitoso">Respeitoso</button>
@@ -190,7 +205,7 @@ footer{color:var(--mute);font-size:13px;margin-top:20px}
     <button type="button" id="fecharConfig">Fechar</button>
   </div>
   <p class="hint" id="testeConfig"></p>
-  <p class="hint">Versão 6.4</p>
+  <p class="hint">Versão 6.5</p>
 </dialog>
 
 <dialog id="hist">
@@ -316,18 +331,44 @@ function pintaModo() {
 }
 document.querySelectorAll('#modos .chip').forEach(b => b.addEventListener('click', () => { modo = b.dataset.m; ls.set('af_modo', modo); pintaModo(); }));
 
+/* ================= Formatos ================= */
+const FORMATOS = [
+  { id: 'whatsapp', ic: '💬', nome: 'WhatsApp', desc: 'Mensagem digitada no WhatsApp, parágrafos curtos, cara de gente.',
+    regra: 'FORMATO WHATSAPP: mensagem digitada por uma pessoa de verdade no celular, em primeira pessoa. Parágrafos curtos de 1 a 3 frases separados por linha em branco. Sem títulos, sem tópicos, sem listas. No máximo 1 emoji. Se quiser destacar UMA palavra, use *assim* (no máximo uma vez).' },
+  { id: 'comentario', ic: '💭', nome: 'Comentário', desc: 'Comentário curto embaixo de post (Instagram, Facebook, YouTube).',
+    regra: 'FORMATO COMENTÁRIO DE REDE SOCIAL: comentário embaixo de um post ou vídeo. Curto e certeiro: 1 a 3 frases, até 300 caracteres na versão completa e até 150 na curta. Primeira frase já com a ideia principal. Sem hashtag, no máximo 1 emoji. Educado o bastante para não ser apagado, afiado o bastante para ganhar curtidas.' },
+  { id: 'instagram', ic: '📸', nome: 'Instagram', desc: 'Legenda de post: gancho na 1ª linha, texto curto, chamada e hashtags.',
+    regra: 'FORMATO LEGENDA DE INSTAGRAM: primeira linha é um gancho forte (aparece antes do "mais"). Depois parágrafos curtos com linha em branco entre eles, de 600 a 1.200 caracteres na versão completa. Termine com uma chamada para ação (comentar, compartilhar, salvar). Na última linha, de 5 a 8 hashtags relevantes em português ligadas ao assunto. Emojis com moderação.' },
+  { id: 'tiktok', ic: '🎵', nome: 'TikTok / Reels', desc: 'Roteiro de vídeo curto para falar na câmera + legenda com hashtags.',
+    regra: 'FORMATO ROTEIRO DE VÍDEO CURTO (TikTok/Reels/Shorts): texto para o Neiron FALAR na câmera, de 30 a 60 segundos na versão completa. Gancho nos 3 primeiros segundos, desenvolvimento com uma ideia por linha (cada linha é uma respiração), fecho com chamada para ação. Depois de uma linha em branco, escreva "Legenda:" com uma legenda de 1 a 2 frases e 3 a 5 hashtags.' },
+  { id: 'discurso', ic: '🎤', nome: 'Discurso', desc: 'Fala para tribuna, reunião ou vídeo: abertura, 3 pontos e fecho forte.',
+    regra: 'FORMATO DISCURSO: texto para ser falado em público (tribuna, reunião, palanque, vídeo), de 2 a 3 minutos na versão completa. Abertura que prende, três ideias com transição clara, repetição de uma frase-chave, pausas marcadas com quebra de linha, fecho forte e memorável. Ritmo de oratória, frases curtas.' },
+  { id: 'narrativa', ic: '📖', nome: 'Narrativa', desc: 'Conta uma história sobre o tema: situação, conflito, virada e mensagem.',
+    regra: 'FORMATO NARRATIVA (storytelling): construa uma narrativa sobre o tema para convencer pela emoção e pela lógica: uma situação concreta e verdadeira (ou claramente apresentada como exemplo), o conflito, a virada e a mensagem final ligada à posição do Neiron. Não invente fatos apresentando como reais; exemplos hipotéticos devem soar como exemplo ("imagine…", "pense numa família que…").' },
+  { id: 'perguntas', ic: '❓', nome: 'Perguntas e respostas', desc: 'As perguntas que vão fazer (inclusive as difíceis) com respostas prontas.',
+    regra: 'FORMATO PERGUNTAS E RESPOSTAS: liste as perguntas que o público, a imprensa ou o adversário fariam sobre o tema (inclua as mais difíceis) e a resposta do Neiron para cada uma, curta e embasada. Escreva cada par assim: uma linha começando com "Pergunta:" e na linha seguinte "Resposta:", com linha em branco entre os pares. Versão completa: 7 pares. Direta: 4 pares. Curta: 2 pares, os mais difíceis.' }
+];
+let formato = ls.get('af_formato') || 'whatsapp';
+if (!FORMATOS.some(f => f.id === formato)) formato = 'whatsapp';
+const regraFormato = () => FORMATOS.find(f => f.id === formato).regra;
+const IC_ESTILO = { auto: '✨', metafora: '🎭', formal: '📜', perguntas: '❓', contraste: '⚖️', historia: '📖', dados: '📊', humor: '😄', ditado: '🗣', absurdo: '🤯', concordo: '🤝', bordao: '💥', biblica: '✝️', ponte: '🌉', denuncia: '📢', analogia: '🔁', didatico: '🧑‍🏫', inversao: '🔄', tres: '3️⃣', caos: '🌀', juridico: '⚖' };
+
 /* ================= Estado salvo ================= */
 let plateia = ls.get('af_plateia') || 'politica';
 if (!PLATEIAS[plateia]) plateia = 'politica';
 let estilo = ls.get('af_estilo5') || 'auto', voz = ls.get('af_voz') || '', tom = ls.get('af_tom5') || PLATEIAS[plateia].tom;
 if (!ESTILOS.some(e => e.id === estilo)) estilo = 'auto';
 
-$('selEstilo').innerHTML = ESTILOS.map(e => `<option value="${e.id}">${esc(e.nome)}</option>`).join('');
-$('selVoz').innerHTML = VOZES.map(v => `<option value="${v.id}">${esc(v.nome)}</option>`).join('');
+$('formatos').innerHTML = FORMATOS.map(f => `<button type="button" class="forte" data-f="${f.id}"><span>${f.ic}</span>${esc(f.nome)}</button>`).join('');
+$('estilos').innerHTML = ESTILOS.map(e => `<button type="button" data-e="${e.id}"><span>${IC_ESTILO[e.id] || '•'}</span>${esc(e.nome.replace(' (o app escolhe)', ''))}</button>`).join('');
+$('vozes').innerHTML = VOZES.map(v => `<button type="button" data-v="${v.id}"><span>${v.id ? '🗣' : '👤'}</span>${esc(v.id ? v.nome : 'Minha voz')}</button>`).join('');
 function pintaOpcoes() {
   document.querySelectorAll('#plateias button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.p === plateia)));
   document.querySelectorAll('#tons .chip').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.v === tom)));
-  $('selEstilo').value = estilo; $('selVoz').value = voz;
+  document.querySelectorAll('#formatos button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.f === formato)));
+  document.querySelectorAll('#estilos button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.e === estilo)));
+  document.querySelectorAll('#vozes button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.v === voz)));
+  $('descFormato').textContent = FORMATOS.find(f => f.id === formato).desc;
   $('descEstilo').textContent = ESTILOS.find(e => e.id === estilo).desc;
 }
 document.querySelectorAll('#plateias button').forEach(b => b.addEventListener('click', () => {
@@ -335,8 +376,11 @@ document.querySelectorAll('#plateias button').forEach(b => b.addEventListener('c
   if (ls.get('af_estilo_manual') !== '1') estilo = plateia === 'juridico' ? 'juridico' : 'auto';
   ls.set('af_plateia', plateia); ls.set('af_tom5', tom); ls.set('af_estilo5', estilo); pintaOpcoes();
 }));
-$('selEstilo').addEventListener('change', e => { estilo = e.target.value; ls.set('af_estilo5', estilo); ls.set('af_estilo_manual', estilo === 'auto' ? '' : '1'); pintaOpcoes(); });
-$('selVoz').addEventListener('change', e => { voz = e.target.value; ls.set('af_voz', voz); });
+$('formatos').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; formato = b.dataset.f; ls.set('af_formato', formato); pintaOpcoes(); });
+$('estilos').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; estilo = b.dataset.e; ls.set('af_estilo5', estilo); ls.set('af_estilo_manual', estilo === 'auto' ? '' : '1'); pintaOpcoes(); });
+$('vozes').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; voz = b.dataset.v; ls.set('af_voz', voz); pintaOpcoes(); });
+// traz o botão escolhido para a vista
+setTimeout(() => document.querySelectorAll('.rolo [aria-pressed=true]').forEach(b => b.scrollIntoView({ block: 'nearest', inline: 'center' })), 300);
 document.querySelectorAll('#tons .chip').forEach(b => b.addEventListener('click', () => { tom = b.dataset.v; ls.set('af_tom5', tom); pintaOpcoes(); }));
 pintaOpcoes();
 pintaModo();
@@ -566,7 +610,7 @@ async function pegaCompartilhado() {
 
 /* ================= Rascunho ================= */
 // Abre sempre zerado. Só recupera o rascunho se o app fechou sem querer há menos de 10 minutos (ex.: o Android fechou ao trocar de app).
-const VERSAO = '6.4';
+const VERSAO = '6.5';
 const rascunhoRecente = Date.now() - (+ls.get('af_rasc_t') || 0) < 10 * 60 * 1000 && ls.get('af_versao') === VERSAO;
 if (rascunhoRecente) { chegou.value = ls.get('af_chegou'); posicao.value = ls.get('af_pos'); $('quem').value = ls.get('af_quem'); $('destino').value = ls.get('af_destino'); }
 else { ['af_chegou', 'af_pos', 'af_quem', 'af_destino'].forEach(k => ls.set(k, '')); }
@@ -664,6 +708,7 @@ COMO USAR O PENSAMENTO:
   : `
 O Neiron não escreveu o pensamento dele desta vez.`}`;
 
+  const nomeFormato = FORMATOS.find(f => f.id === formato).nome;
   const caminhos = rev
     ? `Gere 3 versões melhoradas da resposta do Neiron: {"rotulo":"Sua versão melhorada"} (mesmo conteúdo, bem escrita), {"rotulo":"Mais forte"} (mais convincente) e {"rotulo":"Curta"} (até 280 caracteres).`
     : extra
@@ -703,10 +748,12 @@ REGRAS DE OURO:
 - Nunca invente fatos, números, nomes, datas, citações ou acusações. Use o material e o que a pesquisa confirmar. Se faltar dado, argumente com lógica e valores.
 - Citações e versículos só se forem reais e com autor/referência corretos.
 - Sem ataque pessoal, xingamento, preconceito ou ofensa à família de ninguém. A crítica mira a prática, não a pessoa.
-- Português do Brasil, frases curtas, pronto para colar no WhatsApp. No máximo 1 emoji por versão, e só se combinar com o grupo.
-- FORMATO WHATSAPP HUMANO (obrigatório em todas as versões): texto digitado por uma pessoa de verdade no celular, com experiência, ética e responsabilidade, falando em primeira pessoa. Parágrafos curtos de 1 a 3 frases separados por linha em branco. Sem títulos, sem tópicos, sem listas, sem numeração, sem markdown, sem asterisco duplo, sem travessão longo (—), sem ponto e vírgula, sem aspas curvas. Se quiser destacar UMA palavra, use o negrito do WhatsApp com um asterisco de cada lado (*assim*), no máximo uma vez. Proibido: "Prezado", "Caro interlocutor", "Em suma", "Além disso", "Vale ressaltar", "É importante destacar", "Nesse sentido", "Por fim", "Em conclusão", "Espero ter ajudado". Use conectivos de conversa real quando couber ("Olha", "Veja bem", "Pois é", "Agora, ", "Só que"), sem exagerar. Fontes são citadas no meio da frase, do jeito que a gente fala ("o IBGE mostrou que…"), nunca com link ou referência formal. Não termine com pergunta genérica nem com resumo. Varie o começo: não comece todas as versões pelo nome da pessoa.${opts.outra ? `\n- Faça versões NOVAS e diferentes destas já usadas: ${opts.outra}` : ''}
+- Português do Brasil, frases curtas, pronto para publicar no formato pedido abaixo.
+- ${regraFormato()}
+- ESCRITA HUMANA (vale para qualquer formato): texto de uma pessoa de verdade, com experiência, ética e responsabilidade, em primeira pessoa. Sem markdown, sem asterisco duplo, sem travessão longo (—), sem ponto e vírgula, sem aspas curvas. Se quiser destacar UMA palavra, use o negrito do WhatsApp com um asterisco de cada lado (*assim*), no máximo uma vez. Proibido: "Prezado", "Caro interlocutor", "Em suma", "Além disso", "Vale ressaltar", "É importante destacar", "Nesse sentido", "Por fim", "Em conclusão", "Espero ter ajudado". Use conectivos de conversa real quando couber ("Olha", "Veja bem", "Pois é", "Agora, ", "Só que"), sem exagerar. Fontes são citadas no meio da frase, do jeito que a gente fala ("o IBGE mostrou que…"), nunca com link ou referência formal. Não termine com pergunta genérica nem com resumo. Varie o começo: não comece todas as versões pelo nome da pessoa.${opts.outra ? `\n- Faça versões NOVAS e diferentes destas já usadas: ${opts.outra}` : ''}
 
 ${caminhos}
+Todas as versões no FORMATO ${nomeFormato.toUpperCase()} descrito acima ("Curta" e "Direta" = versões menores do mesmo formato).
 
 ${termo}
 
@@ -756,7 +803,7 @@ async function roda(outra) {
     const r = JSON.parse(txt.slice(txt.indexOf('{'), txt.lastIndexOf('}') + 1));
     r.fontes = busca ? ultimasFontes : [];
     (r.versoes || []).forEach(v => { v.texto = humaniza(v.texto); });
-    r.id = Date.now(); r.plateia = plateia; r.quem = $('quem').value.trim(); r.destino = $('destino').value.trim(); r.modo = modo; r.entrada = chegou.value.trim().slice(0, 300); r.fav = false;
+    r.id = Date.now(); r.plateia = plateia; r.quem = $('quem').value.trim(); r.destino = $('destino').value.trim(); r.modo = modo; r.formato = formato; r.entrada = chegou.value.trim().slice(0, 300); r.fav = false;
     ultimo = r; guardaHist(r); desenha(r);
   } catch (e) {
     saida.innerHTML = '';
@@ -787,7 +834,7 @@ function desenha(r) {
       <div class="top"><h3>${esc(v.rotulo)}</h3><button type="button" class="estrela" data-acao="fav" aria-label="Favoritar">${v.fav ? '⭐' : '☆'}</button></div>
       ${v.tecnica ? `<p class="tec">${esc(v.tecnica)}</p>` : ''}
       <div class="txt">${esc(v.texto)}</div>
-      <div class="row"><button type="button" data-acao="copiar">Copiar</button><a class="btn wa" data-acao="wa" href="https://wa.me/?text=${encodeURIComponent(v.texto)}" target="_blank" rel="noopener">WhatsApp</a></div>
+      <div class="row"><button type="button" data-acao="copiar">Copiar</button>${navigator.share ? '<button type="button" data-acao="share">Compartilhar</button>' : ''}<a class="btn wa" data-acao="wa" href="https://wa.me/?text=${encodeURIComponent(v.texto)}" target="_blank" rel="noopener">WhatsApp</a></div>
       <div class="row ajustes"><button type="button" data-aj="curta">Mais curta</button><button type="button" data-aj="firme">Mais firme</button><button type="button" data-aj="educada">Mais educada</button><button type="button" data-aj="humor">Com humor</button><button type="button" data-aj="voz">Mais meu jeito</button></div>
     </div>`).join('') +
     (Array.isArray(r.embasamento) && r.embasamento.length ? `<div class="card base"><div class="top"><h3>Embasamento</h3></div>${r.embasamento.map(b => `<p class="bitem"><b>${esc(b.tipo)}:</b> ${esc(b.texto)}</p>`).join('')}${(r.fontes || []).length ? `<p class="tec" style="margin-top:10px">Fontes:</p>${r.fontes.map(f => `<p class="bitem"><a href="${esc(f.url)}" target="_blank" rel="noopener">${esc(f.titulo)}</a></p>`).join('')}` : ''}</div>` : '') +
@@ -813,12 +860,13 @@ saida.addEventListener('click', async e => {
     catch (x) { e.target.textContent = 'Segure o texto para copiar'; }
     setTimeout(() => e.target.textContent = 'Copiar', 1800); return;
   }
+  if (acao === 'share') { try { await navigator.share({ text: v.texto }); } catch (x) {} return; }
   if (acao === 'fav') { v.fav = !v.fav; e.target.textContent = v.fav ? '⭐' : '☆'; guardaHist(ultimo); return; }
   if (!aj) return;
   const btn = e.target, antes = btn.textContent; btn.textContent = '…'; btn.disabled = true;
   try {
     const dna = ls.get('af_dna');
-    const novo = await gemini([{ text: `${perfil()}\n${dna && aj === 'voz' ? `Exemplos de como o Neiron escreve:\n"""${dna}"""\n` : ''}\nContexto do grupo: ${PLATEIAS[ultimo.plateia || plateia].nome}.\n${ultimo.modo === 'revisar' ? 'O texto abaixo é uma resposta do próprio Neiron.' : `Material dito por ${ultimo.quem || 'outra pessoa'} (o Neiron NÃO é o autor): ${ultimo.entrada}. A mensagem abaixo é do Neiron para ${ultimo.destino || ultimo.quem || 'essa pessoa'}${ultimo.destino && ultimo.destino !== ultimo.quem ? `, comentando o que ${ultimo.quem || 'a pessoa'} disse (trate ${ultimo.quem || 'a pessoa'} na terceira pessoa)` : ''}. Mantenha o ponto de vista do Neiron.`}\n\nTexto atual da resposta:\n"""${v.texto}"""\n\nAJUSTE: ${AJUSTES[aj]}\nNão invente fatos nem citações. Mantenha o formato de mensagem de WhatsApp digitada por uma pessoa: parágrafos curtos, sem tópicos, sem markdown, sem travessão. Responda só com o novo texto.` }], false, 0.8);
+    const novo = await gemini([{ text: `${perfil()}\n${dna && aj === 'voz' ? `Exemplos de como o Neiron escreve:\n"""${dna}"""\n` : ''}\nContexto do grupo: ${PLATEIAS[ultimo.plateia || plateia].nome}.\n${ultimo.modo === 'revisar' ? 'O texto abaixo é uma resposta do próprio Neiron.' : `Material dito por ${ultimo.quem || 'outra pessoa'} (o Neiron NÃO é o autor): ${ultimo.entrada}. A mensagem abaixo é do Neiron para ${ultimo.destino || ultimo.quem || 'essa pessoa'}${ultimo.destino && ultimo.destino !== ultimo.quem ? `, comentando o que ${ultimo.quem || 'a pessoa'} disse (trate ${ultimo.quem || 'a pessoa'} na terceira pessoa)` : ''}. Mantenha o ponto de vista do Neiron.`}\n\nTexto atual da resposta:\n"""${v.texto}"""\n\nAJUSTE: ${AJUSTES[aj]}\nNão invente fatos nem citações. Mantenha o mesmo formato (${FORMATOS.find(f => f.id === (ultimo.formato || formato)).nome}) e a escrita humana: sem markdown, sem travessão. Responda só com o novo texto.` }], false, 0.8);
     v.texto = humaniza(novo.trim().replace(/^"+|"+$/g, ''));
     card.querySelector('.txt').textContent = v.texto;
     card.querySelector('[data-acao=wa]').href = 'https://wa.me/?text=' + encodeURIComponent(v.texto);
@@ -831,7 +879,7 @@ saida.addEventListener('click', async e => {
 function lerHist() { try { return JSON.parse(ls.get('af_hist') || '[]'); } catch (e) { return []; } }
 function guardaHist(r) {
   let h = lerHist().filter(x => x.id !== r.id);
-  h.unshift({ id: r.id, plateia: r.plateia, quem: r.quem, destino: r.destino, modo: r.modo, diagnostico: r.diagnostico, embasamento: r.embasamento, fontes: r.fontes, entrada: r.entrada, entendi: r.entendi, versoes: r.versoes, termometro: r.termometro, cuidado: r.cuidado, conceito: r.conceito });
+  h.unshift({ id: r.id, plateia: r.plateia, quem: r.quem, destino: r.destino, modo: r.modo, formato: r.formato, diagnostico: r.diagnostico, embasamento: r.embasamento, fontes: r.fontes, entrada: r.entrada, entendi: r.entendi, versoes: r.versoes, termometro: r.termometro, cuidado: r.cuidado, conceito: r.conceito });
   const favs = h.filter(x => x.versoes?.some(v => v.fav)), resto = h.filter(x => !x.versoes?.some(v => v.fav)).slice(0, 40);
   h = [...favs, ...resto].sort((a, b) => b.id - a.id);
   ls.set('af_hist', JSON.stringify(h));
@@ -841,7 +889,7 @@ function desenhaHist() {
   const h = lerHist().filter(x => filtroHist === 'todos' || x.versoes?.some(v => v.fav));
   $('listaHist').innerHTML = h.length ? h.map(x => {
     const vs = filtroHist === 'fav' ? x.versoes.filter(v => v.fav) : x.versoes;
-    return `<div class="hist"><p class="q">${new Date(x.id).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' })} · ${esc(PLATEIAS[x.plateia]?.nome || '')}${x.quem ? ' · ' + esc(x.quem) : ''}</p><p>${esc((x.entendi || x.entrada || '').slice(0, 140))}</p><div class="row" style="margin-top:6px"><button type="button" data-abre="${x.id}">Abrir ${vs.length} resposta${vs.length > 1 ? 's' : ''}</button><button type="button" class="lixo" data-apaga="${x.id}" aria-label="Apagar esta conversa">🗑</button></div></div>`;
+    return `<div class="hist"><p class="q">${new Date(x.id).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' })} · ${esc(PLATEIAS[x.plateia]?.nome || '')}${x.formato ? ' · ' + esc(FORMATOS.find(f => f.id === x.formato)?.nome || '') : ''}${x.quem ? ' · ' + esc(x.quem) : ''}</p><p>${esc((x.entendi || x.entrada || '').slice(0, 140))}</p><div class="row" style="margin-top:6px"><button type="button" data-abre="${x.id}">Abrir ${vs.length} resposta${vs.length > 1 ? 's' : ''}</button><button type="button" class="lixo" data-apaga="${x.id}" aria-label="Apagar esta conversa">🗑</button></div></div>`;
   }).join('') + `<div class="row" style="margin-top:16px"><button type="button" class="lixo" id="apagaTudo">🗑 Apagar todo o histórico</button></div>` : `<p class="hint" style="margin-top:14px">${filtroHist === 'fav' ? 'Toque na ☆ de uma resposta para guardar aqui.' : 'Suas respostas aparecem aqui.'}</p>`;
 }
 $('abrirHist').addEventListener('click', () => { desenhaHist(); $('hist').showModal(); });

@@ -1,5 +1,5 @@
 // Resposta Afiada — service worker
-const SHELL = 'afiada-shell-v64';
+const SHELL = 'afiada-shell-v65';
 const ARQS = ['./', './index.html', './manifest.webmanifest', './icon-192.png', './icon-512.png'];
 
 self.addEventListener('install', e => {
