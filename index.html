@@ -240,7 +240,7 @@ footer{color:var(--mute);font-size:13px;margin-top:20px}
   <p class="hint" id="testeConfig"></p>
   <div class="row"><button type="button" id="testarModelos">🔍 Testar modelos disponíveis</button></div>
   <div id="listaModelos" class="row"></div>
-  <p class="hint">Versão 7.1</p>
+  <p class="hint">Versão 7.2</p>
 </dialog>
 
 <dialog id="hist">
@@ -582,6 +582,7 @@ async function gemini(parts, json, temp, busca, pensar) {
   throw new Error(/high demand|overloaded|unavailable/i.test(ultimoErro || '') ? 'O Google está sobrecarregado agora. Tente de novo em 1 minuto.' : /quota|rate|limit|exhaust/i.test(ultimoErro || '') ? 'O Google ainda está segurando as chamadas. Espere 1 minuto e toque em Gerar.' : (ultimoErro || 'Modelo indisponível.'));
 }
 /* ================= Claude (Anthropic) ================= */
+const semAjuste = {};
 async function claude(parts, json, temp, busca, pensar) {
   if (!chaveClaude()) { abrirConfig(); throw new Error('Coloque a chave do Claude.'); }
   const content = parts.map(p => p.text != null ? { type: 'text', text: p.text }
@@ -594,8 +595,7 @@ async function claude(parts, json, temp, busca, pensar) {
     let espera = 0, limites = 0;
     for (const m of tentar) {
       const body = { model: m, max_tokens: pensar ? 16000 : 8000, messages: [{ role: 'user', content }] };
-      if (pensar && pensar >= 2048) body.thinking = { type: 'enabled', budget_tokens: Math.min(pensar, 10000) };
-      else body.temperature = Math.min(temp ?? 0.7, 1);
+      if (pensar && pensar >= 2048 && !semAjuste.thinking) body.thinking = { type: 'enabled', budget_tokens: Math.min(pensar, 10000) };
       if (busca) body.tools = [{ type: 'web_search_20250305', name: 'web_search', max_uses: profundidade === 'sabedoria' ? 5 : 3 }];
       let r, d;
       try {
@@ -617,6 +617,8 @@ async function claude(parts, json, temp, busca, pensar) {
         return txt;
       }
       ultimoErro = d.error?.message || ('HTTP ' + r.status);
+      // modelo novo recusou um ajuste: tira o ajuste e tenta de novo
+      if (r.status === 400 && /thinking|budget/i.test(ultimoErro) && body.thinking) { semAjuste.thinking = true; return claude(parts, json, temp, busca, pensar); }
       if (r.status === 401) throw new Error('Chave do Claude inválida.');
       if (/credit balance|billing|purchase credits/i.test(ultimoErro)) throw new Error('Acabou o crédito na Anthropic. Coloque mais em platform.claude.com → Billing.');
       if (r.status === 429) { limites++; espera = Math.max(espera, +r.headers.get('retry-after') || 0); continue; }
@@ -777,7 +779,7 @@ async function pegaCompartilhado() {
 
 /* ================= Rascunho ================= */
 // Abre sempre zerado. Só recupera o rascunho se o app fechou sem querer há menos de 10 minutos (ex.: o Android fechou ao trocar de app).
-const VERSAO = '7.1';
+const VERSAO = '7.2';
 const rascunhoRecente = Date.now() - (+ls.get('af_rasc_t') || 0) < 10 * 60 * 1000 && ls.get('af_versao') === VERSAO;
 if (rascunhoRecente) { chegou.value = ls.get('af_chegou'); posicao.value = ls.get('af_pos'); $('quem').value = ls.get('af_quem'); $('destino').value = ls.get('af_destino'); }
 else { ['af_chegou', 'af_pos', 'af_quem', 'af_destino'].forEach(k => ls.set(k, '')); }
