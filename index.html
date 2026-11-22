@@ -109,6 +109,7 @@ footer{color:var(--mute);font-size:13px;margin-top:20px}
     <button type="button" class="icon" id="abrirHist" aria-label="Histórico e favoritos">🕘</button>
     <button type="button" class="icon" id="abrirConfig" aria-label="Configurações">⚙</button>
   </header>
+  <p class="hint" id="cerebroTopo" style="margin:0"></p>
   <p class="lead">Compartilhe do WhatsApp ou Instagram → <b>Afiada</b>. Ele transcreve e espera o seu pensamento.</p>
 
   <div class="note" id="semChave" hidden>Falta a chave do Gemini. <button type="button" id="abrirConfig2">Colocar chave</button></div>
@@ -213,14 +214,24 @@ footer{color:var(--mute);font-size:13px;margin-top:20px}
 <dialog id="config">
   <h2>Configurações</h2>
   <p class="hint">Tudo fica salvo só neste celular.</p>
-  <label for="chave">Chave do Gemini</label>
+  <label>Cérebro do app (quem pensa e escreve)</label>
+  <div class="row" id="cerebros" style="margin-top:0">
+    <button type="button" class="chip" data-c="claude">🟠 Claude</button>
+    <button type="button" class="chip" data-c="gemini">🔷 Gemini</button>
+  </div>
+  <label for="chaveClaude">Chave do Claude</label>
+  <input type="password" id="chaveClaude" autocomplete="off" placeholder="sk-ant-…">
+  <p class="hint" style="margin-top:6px">Crie em <a href="https://platform.claude.com" target="_blank" rel="noopener">platform.claude.com</a> → API Keys. Pago por uso: defina um limite de gasto lá.</p>
+  <label for="chave">Chave do Gemini (ouve áudio e vídeo)</label>
   <input type="password" id="chave" autocomplete="off" placeholder="AIza…">
-  <p class="hint" style="margin-top:6px">Pegue em <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">aistudio.google.com/apikey</a> → copiar.</p>
+  <p class="hint" style="margin-top:6px">O Claude não ouve áudio: a transcrição continua no Gemini (grátis). Pegue em <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">aistudio.google.com/apikey</a>.</p>
   <label for="dna">Meu jeito de escrever</label>
   <p class="hint">Cole 3 a 6 mensagens que você mesmo escreveu (do WhatsApp, posts). O app copia o seu jeito.</p>
   <textarea id="dna" rows="5" placeholder="Ex.: Bom dia, pessoal! Vou ser direto…"></textarea>
   <label class="check"><input type="checkbox" id="auto"> Gerar sozinho ao compartilhar, sem esperar meu pensamento</label>
-  <label for="modelo">Modelo (só mexa se der erro)</label>
+  <label for="modeloClaude">Modelo do Claude (só mexa se der erro)</label>
+  <input type="text" id="modeloClaude" autocomplete="off">
+  <label for="modelo">Modelo do Gemini (só mexa se der erro)</label>
   <input type="text" id="modelo" autocomplete="off">
   <div class="row">
     <button type="button" class="btn go" id="salvarConfig" style="width:auto;flex:1;margin:0">Salvar</button>
@@ -229,7 +240,7 @@ footer{color:var(--mute);font-size:13px;margin-top:20px}
   <p class="hint" id="testeConfig"></p>
   <div class="row"><button type="button" id="testarModelos">🔍 Testar modelos disponíveis</button></div>
   <div id="listaModelos" class="row"></div>
-  <p class="hint">Versão 7.0</p>
+  <p class="hint">Versão 7.1</p>
 </dialog>
 
 <dialog id="hist">
@@ -449,36 +460,72 @@ $('optWeb').addEventListener('change', e => ls.set('af_web', e.target.checked ? 
 $('optHist').addEventListener('change', e => ls.set('af_historia', e.target.checked ? 'sim' : 'nao'));
 
 /* ================= Configurações ================= */
+const MODELO_CLAUDE = 'claude-sonnet-5-5';
+const RESERVAS_CLAUDE = ['claude-sonnet-5-5', 'claude-opus-5-5', 'claude-haiku-5-5'];
 const chave = () => ls.get('af_chave').trim();
+const chaveClaude = () => ls.get('af_chave_claude').trim();
 const modelo = () => { const m = ls.get('af_modelo').trim(); return !m || /^gemini-(1\.|2\.)/.test(m) ? MODELO_PADRAO : m; };
+const modeloClaude = () => ls.get('af_modelo_claude').trim() || MODELO_CLAUDE;
+const cerebro = () => (ls.get('af_cerebro') || (chaveClaude() ? 'claude' : 'gemini')) === 'claude' && chaveClaude() ? 'claude' : 'gemini';
 const autoGerar = () => ls.get('af_auto2') === 'sim';
-function checaChave() { $('semChave').hidden = !!chave(); }
-function abrirConfig() { $('chave').value = chave(); $('modelo').value = modelo(); $('dna').value = ls.get('af_dna'); $('auto').checked = autoGerar(); $('testeConfig').textContent = ''; $('config').showModal(); }
+function checaChave() { $('semChave').hidden = !!(chave() || chaveClaude()); }
+let cerebroEscolhido = '';
+function pintaCerebro() { document.querySelectorAll('#cerebros .chip').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.c === cerebroEscolhido))); }
+document.querySelectorAll('#cerebros .chip').forEach(b => b.addEventListener('click', () => { cerebroEscolhido = b.dataset.c; pintaCerebro(); }));
+function abrirConfig() {
+  $('chave').value = chave(); $('chaveClaude').value = chaveClaude(); $('modelo').value = modelo(); $('modeloClaude').value = modeloClaude();
+  $('dna').value = ls.get('af_dna'); $('auto').checked = autoGerar(); $('testeConfig').textContent = ''; $('listaModelos').innerHTML = '';
+  cerebroEscolhido = ls.get('af_cerebro') || (chaveClaude() ? 'claude' : 'gemini'); pintaCerebro();
+  $('config').showModal();
+}
+function pintaCerebroTopo() { $('cerebroTopo').textContent = cerebro() === 'claude' ? '🟠 Pensando com Claude' : '🔷 Pensando com Gemini'; }
+pintaCerebroTopo();
 $('abrirConfig').addEventListener('click', abrirConfig);
 $('abrirConfig2').addEventListener('click', abrirConfig);
 $('fecharConfig').addEventListener('click', () => $('config').close());
 $('salvarConfig').addEventListener('click', async () => {
   ls.set('af_chave', $('chave').value.trim());
+  ls.set('af_chave_claude', $('chaveClaude').value.trim());
   ls.set('af_modelo', $('modelo').value.trim() || MODELO_PADRAO);
+  ls.set('af_modelo_claude', $('modeloClaude').value.trim() || MODELO_CLAUDE);
+  ls.set('af_cerebro', cerebroEscolhido || 'gemini');
   ls.set('af_dna', $('dna').value.trim().slice(0, 4000));
   ls.set('af_auto2', $('auto').checked ? 'sim' : 'nao');
-  checaChave();
-$('testarModelos').addEventListener('click', async () => {
-  const k = $('chave').value.trim() || chave(); const box = $('listaModelos');
-  if (!k) { box.textContent = 'Coloque a chave primeiro.'; return; }
-  box.textContent = 'Consultando o Google…';
-  try {
-    const r = await fetch('https://generativelanguage.googleapis.com/v1beta/models?pageSize=200', { headers: { 'x-goog-api-key': k } });
-    const d = await r.json();
-    if (!r.ok) throw new Error(d.error?.message || r.status);
-    const ms = (d.models || []).filter(m => (m.supportedGenerationMethods || []).includes('generateContent') && /gemini.*(flash|pro)/.test(m.name) && !/image|tts|audio|live|embedding/.test(m.name)).map(m => m.name.replace('models/', ''));
-    box.innerHTML = ms.length ? '<p class="hint" style="width:100%;margin:0">Disponíveis para a sua chave (toque para usar):</p>' + ms.map(m => `<button type="button" class="chip" data-mod="${esc(m)}" aria-pressed="${m === modelo()}">${esc(m)}</button>`).join('') : 'Nenhum modelo encontrado.';
-  } catch (e) { box.textContent = 'Erro: ' + e.message; }
-});
-$('listaModelos').addEventListener('click', e => { const m = e.target.dataset.mod; if (!m) return; $('modelo').value = m; ls.set('af_modelo', m); document.querySelectorAll('#listaModelos .chip').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.mod === m))); });
+  checaChave(); pintaCerebroTopo();
+  const msgs = [];
   $('testeConfig').textContent = 'Testando…';
-  try { await gemini([{ text: 'Responda só: ok' }], false); $('testeConfig').textContent = 'Funcionando ✓'; setTimeout(() => $('config').close(), 700); }
-  catch (e) { $('testeConfig').textContent = 'Erro: ' + e.message; }
+  if (chaveClaude()) { try { await claude([{ text: 'Responda só: ok' }], false); msgs.push('Claude ✓'); } catch (e) { msgs.push('Claude: ' + e.message); } }
+  if (chave()) { try { await gemini([{ text: 'Responda só: ok' }], false); msgs.push('Gemini ✓'); } catch (e) { msgs.push('Gemini: ' + e.message); } }
+  $('testeConfig').textContent = msgs.join(' · ') || 'Coloque pelo menos uma chave.';
+  if (msgs.length && msgs.every(m => m.endsWith('✓'))) setTimeout(() => $('config').close(), 900);
+});
+$('testarModelos').addEventListener('click', async () => {
+  const box = $('listaModelos'); box.textContent = 'Consultando…';
+  let html = '';
+  const kc = $('chaveClaude').value.trim() || chaveClaude();
+  if (kc) {
+    try {
+      const r = await fetch('https://api.anthropic.com/v1/models?limit=100', { headers: { 'x-api-key': kc, 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' } });
+      const d = await r.json(); if (!r.ok) throw new Error(d.error?.message || r.status);
+      const ms = (d.data || []).map(m => m.id).filter(id => /claude/.test(id));
+      html += '<p class="hint" style="width:100%;margin:0">Claude (toque para usar):</p>' + ms.map(m => `<button type="button" class="chip" data-modc="${esc(m)}" aria-pressed="${m === modeloClaude()}">${esc(m)}</button>`).join('');
+    } catch (e) { html += `<p class="hint" style="width:100%;margin:0">Claude: erro ${esc(e.message)}</p>`; }
+  }
+  const k = $('chave').value.trim() || chave();
+  if (k) {
+    try {
+      const r = await fetch('https://generativelanguage.googleapis.com/v1beta/models?pageSize=200', { headers: { 'x-goog-api-key': k } });
+      const d = await r.json(); if (!r.ok) throw new Error(d.error?.message || r.status);
+      const ms = (d.models || []).filter(m => (m.supportedGenerationMethods || []).includes('generateContent') && /gemini.*(flash|pro)/.test(m.name) && !/image|tts|audio|live|embedding/.test(m.name)).map(m => m.name.replace('models/', ''));
+      html += '<p class="hint" style="width:100%;margin:8px 0 0">Gemini (toque para usar):</p>' + ms.map(m => `<button type="button" class="chip" data-mod="${esc(m)}" aria-pressed="${m === modelo()}">${esc(m)}</button>`).join('');
+    } catch (e) { html += `<p class="hint" style="width:100%;margin:0">Gemini: erro ${esc(e.message)}</p>`; }
+  }
+  box.innerHTML = html || 'Coloque uma chave primeiro.';
+});
+$('listaModelos').addEventListener('click', e => {
+  const m = e.target.dataset.mod, mc = e.target.dataset.modc;
+  if (m) { $('modelo').value = m; ls.set('af_modelo', m); document.querySelectorAll('#listaModelos [data-mod]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.mod === m))); }
+  if (mc) { $('modeloClaude').value = mc; ls.set('af_modelo_claude', mc); document.querySelectorAll('#listaModelos [data-modc]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.modc === mc))); }
 });
 checaChave();
 
@@ -534,6 +581,57 @@ async function gemini(parts, json, temp, busca, pensar) {
   }
   throw new Error(/high demand|overloaded|unavailable/i.test(ultimoErro || '') ? 'O Google está sobrecarregado agora. Tente de novo em 1 minuto.' : /quota|rate|limit|exhaust/i.test(ultimoErro || '') ? 'O Google ainda está segurando as chamadas. Espere 1 minuto e toque em Gerar.' : (ultimoErro || 'Modelo indisponível.'));
 }
+/* ================= Claude (Anthropic) ================= */
+async function claude(parts, json, temp, busca, pensar) {
+  if (!chaveClaude()) { abrirConfig(); throw new Error('Coloque a chave do Claude.'); }
+  const content = parts.map(p => p.text != null ? { type: 'text', text: p.text }
+    : p.inline_data && /^image\//.test(p.inline_data.mime_type) ? { type: 'image', source: { type: 'base64', media_type: p.inline_data.mime_type, data: p.inline_data.data } }
+    : null).filter(Boolean);
+  if (json) content.push({ type: 'text', text: 'Responda apenas com o JSON pedido, sem nenhum texto antes ou depois.' });
+  const tentar = [modeloClaude(), ...RESERVAS_CLAUDE.filter(m => m !== modeloClaude())];
+  let ultimoErro = null;
+  for (let rodada = 0; rodada < 3; rodada++) {
+    let espera = 0, limites = 0;
+    for (const m of tentar) {
+      const body = { model: m, max_tokens: pensar ? 16000 : 8000, messages: [{ role: 'user', content }] };
+      if (pensar && pensar >= 2048) body.thinking = { type: 'enabled', budget_tokens: Math.min(pensar, 10000) };
+      else body.temperature = Math.min(temp ?? 0.7, 1);
+      if (busca) body.tools = [{ type: 'web_search_20250305', name: 'web_search', max_uses: profundidade === 'sabedoria' ? 5 : 3 }];
+      let r, d;
+      try {
+        r = await fetch('https://api.anthropic.com/v1/messages', {
+          method: 'POST',
+          headers: { 'content-type': 'application/json', 'x-api-key': chaveClaude(), 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' },
+          body: JSON.stringify(body)
+        });
+        d = await r.json().catch(() => ({}));
+      } catch (e) { throw new Error('Sem internet ou conexão fraca.'); }
+      if (r.ok) {
+        const blocos = d.content || [];
+        const txt = blocos.filter(b => b.type === 'text').map(b => b.text).join('');
+        const fontes = [];
+        blocos.filter(b => b.type === 'web_search_tool_result' && Array.isArray(b.content)).forEach(b => b.content.forEach(x => { if (x.url && !fontes.some(f => f.url === x.url)) fontes.push({ titulo: x.title || x.url, url: x.url }); }));
+        ultimasFontes = fontes.slice(0, 8);
+        ultimaBusca = blocos.some(b => b.type === 'server_tool_use' && b.name === 'web_search');
+        if (!txt) { ultimoErro = 'resposta vazia'; continue; }
+        return txt;
+      }
+      ultimoErro = d.error?.message || ('HTTP ' + r.status);
+      if (r.status === 401) throw new Error('Chave do Claude inválida.');
+      if (/credit balance|billing|purchase credits/i.test(ultimoErro)) throw new Error('Acabou o crédito na Anthropic. Coloque mais em platform.claude.com → Billing.');
+      if (r.status === 429) { limites++; espera = Math.max(espera, +r.headers.get('retry-after') || 0); continue; }
+      if (r.status === 404 || r.status === 529 || r.status >= 500 || /not_found|model|overloaded/i.test(ultimoErro)) continue;
+      throw new Error('O Claude recusou o pedido: ' + ultimoErro);
+    }
+    if (!limites) break;
+    const seg = Math.min(Math.max(Math.ceil(espera) || 20, 8), 60);
+    for (let t = seg; t > 0; t--) { if (avisoEspera) avisoEspera(`O Claude pediu uma pausa. Tentando de novo em ${t}s…`); await dorme(1000); }
+  }
+  throw new Error(/overloaded/i.test(ultimoErro || '') ? 'O Claude está sobrecarregado agora. Tente de novo em 1 minuto.' : (ultimoErro || 'Claude indisponível.'));
+}
+/* Quem pensa e escreve: Claude (se escolhido e com chave) ou Gemini */
+const ia = (...a) => cerebro() === 'claude' ? claude(...a) : gemini(...a);
+
 const paraBase64 = blob => new Promise((ok, falha) => {
   const fr = new FileReader();
   fr.onload = () => ok(String(fr.result).split(',')[1]);
@@ -609,7 +707,7 @@ async function transcreve(f, tipo, anexo) {
   const msg = tipo === 'video' ? 'Assistindo o vídeo e transcrevendo…' : 'Ouvindo o áudio e transcrevendo…';
   status(msg); mostraErro('');
   try {
-    if (!chave()) throw new Error('coloque a chave do Gemini na engrenagem ⚙.');
+    if (!chave()) throw new Error('para ouvir áudio e vídeo o app usa o Gemini: coloque a chave do Gemini na engrenagem ⚙.');
     const parte = await parteMidia(f, tipo === 'video' ? tipoVideo(f) : tipoAudio(f), status);
     status(msg);
     avisoEspera = status;
@@ -679,7 +777,7 @@ async function pegaCompartilhado() {
 
 /* ================= Rascunho ================= */
 // Abre sempre zerado. Só recupera o rascunho se o app fechou sem querer há menos de 10 minutos (ex.: o Android fechou ao trocar de app).
-const VERSAO = '7.0';
+const VERSAO = '7.1';
 const rascunhoRecente = Date.now() - (+ls.get('af_rasc_t') || 0) < 10 * 60 * 1000 && ls.get('af_versao') === VERSAO;
 if (rascunhoRecente) { chegou.value = ls.get('af_chegou'); posicao.value = ls.get('af_pos'); $('quem').value = ls.get('af_quem'); $('destino').value = ls.get('af_destino'); }
 else { ['af_chegou', 'af_pos', 'af_quem', 'af_destino'].forEach(k => ls.set(k, '')); }
@@ -922,21 +1020,21 @@ async function roda(outra) {
   try {
     let r, fontes = [], pesquisou = false;
     if (profundidade === 'natural') {
-      const txt = await gemini([{ text: pedidoNatural({ outra: outraTxt }) }, ...await imagens()], true, 0.8, busca, PENSAR.natural);
+      const txt = await ia([{ text: pedidoNatural({ outra: outraTxt }) }, ...await imagens()], true, 0.8, busca, PENSAR.natural);
       fontes = busca ? ultimasFontes : []; pesquisou = busca && ultimaBusca;
       r = lerJSON(txt);
     } else {
       let analise;
       if (outra && ultimo?.analise) analise = ultimo.analise;
       else {
-        const t1 = await gemini([{ text: pedidoAnalise() }, ...await imagens()], true, 0.3, busca, 1024);
+        const t1 = await ia([{ text: pedidoAnalise() }, ...await imagens()], true, 0.3, busca, 1024);
         fontes = busca ? ultimasFontes : []; pesquisou = busca && ultimaBusca;
         analise = lerJSON(t1);
       }
       if (outra && ultimo?.analise) { fontes = ultimo.fontes || []; pesquisou = !!ultimo.pesquisou; }
       avisoEspera('Etapa 2 de 2: escrevendo e revisando…');
       gerar.textContent = 'Escrevendo…';
-      const t2 = await gemini([{ text: pedidoRedacao(analise, { outra: outraTxt }) }], true, 0.8, false, PENSAR[profundidade]);
+      const t2 = await ia([{ text: pedidoRedacao(analise, { outra: outraTxt }) }], true, 0.8, false, PENSAR[profundidade]);
       const red = lerJSON(t2);
       r = Object.assign({}, red, {
         analise,
@@ -1047,7 +1145,7 @@ saida.addEventListener('click', async e => {
   const btn = e.target, antes = btn.textContent; btn.textContent = '…'; btn.disabled = true;
   try {
     const dna = ls.get('af_dna');
-    const novo = await gemini([{ text: `${perfil()}\n${dna && aj === 'voz' ? `Exemplos de como o Neiron escreve:\n"""${dna}"""\n` : ''}\nContexto do grupo: ${PLATEIAS[ultimo.plateia || plateia].nome}.\n${ultimo.modo === 'revisar' ? 'O texto abaixo é uma resposta do próprio Neiron.' : `Material dito por ${ultimo.quem || 'outra pessoa'} (o Neiron NÃO é o autor): ${ultimo.entrada}. A mensagem abaixo é do Neiron para ${ultimo.destino || ultimo.quem || 'essa pessoa'}${ultimo.destino && ultimo.destino !== ultimo.quem ? `, comentando o que ${ultimo.quem || 'a pessoa'} disse (trate ${ultimo.quem || 'a pessoa'} na terceira pessoa)` : ''}. Mantenha o ponto de vista do Neiron.`}\n\nTexto atual da resposta:\n"""${v.texto}"""\n\nAJUSTE: ${AJUSTES[aj]}\nNão invente fatos nem citações. Mantenha o mesmo formato (${FORMATOS.find(f => f.id === (ultimo.formato || formato)).nome}) e a escrita humana: sem markdown, sem travessão. Responda só com o novo texto.` }], false, 0.8);
+    const novo = await ia([{ text: `${perfil()}\n${dna && aj === 'voz' ? `Exemplos de como o Neiron escreve:\n"""${dna}"""\n` : ''}\nContexto do grupo: ${PLATEIAS[ultimo.plateia || plateia].nome}.\n${ultimo.modo === 'revisar' ? 'O texto abaixo é uma resposta do próprio Neiron.' : `Material dito por ${ultimo.quem || 'outra pessoa'} (o Neiron NÃO é o autor): ${ultimo.entrada}. A mensagem abaixo é do Neiron para ${ultimo.destino || ultimo.quem || 'essa pessoa'}${ultimo.destino && ultimo.destino !== ultimo.quem ? `, comentando o que ${ultimo.quem || 'a pessoa'} disse (trate ${ultimo.quem || 'a pessoa'} na terceira pessoa)` : ''}. Mantenha o ponto de vista do Neiron.`}\n\nTexto atual da resposta:\n"""${v.texto}"""\n\nAJUSTE: ${AJUSTES[aj]}\nNão invente fatos nem citações. Mantenha o mesmo formato (${FORMATOS.find(f => f.id === (ultimo.formato || formato)).nome}) e a escrita humana: sem markdown, sem travessão. Responda só com o novo texto.` }], false, 0.8);
     v.texto = humaniza(novo.trim().replace(/^"+|"+$/g, ''));
     card.querySelector('.txt').textContent = v.texto;
     card.querySelector('[data-acao=wa]').href = 'https://wa.me/?text=' + encodeURIComponent(v.texto);
