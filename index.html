@@ -32,7 +32,8 @@ button,.btn,a.btn{font:700 15px Archivo,system-ui,sans-serif;min-height:44px;pad
 .icon{width:44px;padding:0;justify-content:center;font-size:19px}
 .go{background:var(--red);border-color:var(--red);color:#fff;font-size:19px;min-height:58px;width:100%;justify-content:center;font-stretch:112%;font-weight:800;margin-top:6px}
 .go:disabled{opacity:.55}
-.seg{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:6px}
+.seg{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
+.grid2c{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-top:8px}
 .seg button{min-height:54px;flex-direction:column;justify-content:center;gap:0;font-size:13px;padding:4px;line-height:1.15;text-align:center}
 .seg button span{font-size:19px}
 .seg button[aria-pressed=true],.chip[aria-pressed=true]{background:var(--ink);color:var(--bg)}
@@ -70,13 +71,18 @@ details.mais[open] summary::before{content:'–'}
 .rolo button span{font-size:20px}
 .rolo button[aria-pressed=true]{background:var(--ink);color:var(--bg)}
 .rolo button.forte[aria-pressed=true]{background:var(--red);border-color:var(--red);color:#fff}
+.seg3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.seg3 button{min-height:62px;flex-direction:column;justify-content:center;gap:2px;font-size:13.5px;line-height:1.15;text-align:center;padding:4px}
+.seg3 button span{font-size:20px}
+.seg3 button[aria-pressed=true]{background:var(--red);border-color:var(--red);color:#fff}
 .deslize{font-size:12px;font-weight:600;color:var(--mute);margin-left:6px}
 .passo{display:inline-grid;place-items:center;width:28px;height:28px;border-radius:50%;background:var(--red);color:#fff;font-size:15px;margin-right:6px;vertical-align:2px}
 .mic-grande{background:var(--ink);color:var(--bg);min-height:52px;font-size:16px}
 .mic-grande.on{background:var(--red);border-color:var(--red);color:#fff}
 .estrela{border:0;min-height:36px;width:36px;padding:0;justify-content:center;font-size:20px}
 .cuidado{font-size:14px}
-.base{border-style:dashed}.diag{border-color:var(--red);border-width:3px}.bitem{margin:6px 0;font-size:15px;line-height:1.45}.bitem a{color:var(--red);word-break:break-word}
+.base{border-style:dashed}.mini{padding:10px 16px}.mini summary{cursor:pointer;min-height:36px;display:flex;align-items:center;flex-wrap:wrap;gap:4px}
+.selo{display:inline-block;font-size:12px;font-weight:700;border-radius:20px;padding:1px 8px;margin-right:4px;border:1px solid var(--mute)}.s-confirmado{background:var(--ok);border-color:var(--ok);color:#fff}.s-interpretacao{border-color:var(--warn)}.s-opiniao{border-color:var(--mute)}.s-hipotese{border-style:dashed}.diag{border-color:var(--red);border-width:3px}.bitem{margin:6px 0;font-size:15px;line-height:1.45}.bitem a{color:var(--red);word-break:break-word}
 .err{color:var(--red);font-weight:600}
 .wait{color:var(--mute)}
 .skel{height:120px;border-radius:10px;background:linear-gradient(90deg,var(--soft),transparent,var(--soft));background-size:200% 100%;margin-bottom:12px}
@@ -114,7 +120,7 @@ footer{color:var(--mute);font-size:13px;margin-top:20px}
       <button type="button" class="chip" data-m="revisar">✍️ Revisar minha resposta</button>
     </div>
     <h2 id="tituloEntrada"><span class="passo">1</span> O que chegou <span style="font-weight:600;color:var(--mute);font-size:14px">(de outra pessoa)</span></h2>
-    <input type="text" id="quem" placeholder="Quem fala no áudio/texto? Ex.: Naná" autocomplete="off" style="margin-bottom:8px">
+    <input type="text" id="quem" placeholder="Quem fala no áudio ou texto (opcional)" autocomplete="off" style="margin-bottom:8px">
     <audio id="player" controls hidden></audio>
     <video id="video" controls hidden playsinline></video>
     <p class="wait" id="statusMidia" hidden></p>
@@ -131,11 +137,11 @@ footer{color:var(--mute);font-size:13px;margin-top:20px}
 
   <section class="box" id="secPensamento">
     <h2 id="rotPosicao"><span class="passo">2</span> O que você pensa</h2>
-    <p class="hint" id="dicaPosicao">Fale ou escreva do seu jeito: o que você entendeu, o que quer dizer, sua posição. O app organiza, embasa e transforma em resposta. Pode também contar o contexto: "a Naná mandou pro João e eu vou responder o João".</p>
-    <textarea id="posicao" rows="5" placeholder="Ex.: Ela está errada, a obra foi feita com dinheiro do estado e não da prefeitura. Quero responder o João mostrando isso, com respeito."></textarea>
+    <p class="hint" id="dicaPosicao">Fale ou escreva do seu jeito: o que você entendeu, sua posição e o que quer dizer. Se for o caso, conte o contexto (quem mandou para quem). O app organiza, aprofunda e transforma em resposta.</p>
+    <textarea id="posicao" rows="5" placeholder="Seu pensamento sobre o assunto…"></textarea>
     <div class="row" style="margin-top:8px"><button type="button" id="mic" class="mic-grande">🎙 Falar meu pensamento</button><span class="hint" id="micStatus" style="margin:0"></span></div>
     <label for="destino" class="hint" id="rotDestino" style="display:block;margin-top:14px;font-weight:700">Vou responder para</label>
-    <input type="text" id="destino" placeholder="Ex.: João (vazio = quem falou)" autocomplete="off">
+    <input type="text" id="destino" placeholder="Nome de quem vai receber (vazio = quem falou)" autocomplete="off">
   </section>
 
   <section class="box">
@@ -146,12 +152,28 @@ footer{color:var(--mute);font-size:13px;margin-top:20px}
       <button type="button" data-p="formal"><span>💼</span>Formal</button>
       <button type="button" data-p="juridico"><span>⚖</span>Jurídico</button>
       <button type="button" data-p="amigos"><span>☕</span>Dia a dia</button>
+      <button type="button" data-p="biblia"><span>✝️</span>Bíblia</button>
+    </div>
+    <div id="painelBiblia" class="biblia" hidden>
+      <p class="hint" style="margin:10px 0 6px">Texto bíblico (opcional) — tradução de referência: TEB (ecumênica)</p>
+      <input type="text" id="bLivro" list="livros" placeholder="Livro (comece a digitar)" autocomplete="off">
+      <datalist id="livros"></datalist>
+      <div class="grid2c"><input type="text" id="bCap" inputmode="numeric" placeholder="Capítulo" autocomplete="off"><input type="text" id="bVers" inputmode="numeric" placeholder="Versículos (ex.: 1-12)" autocomplete="off"></div>
+      <p class="hint" style="margin-top:6px">Pode também só colar uma pergunta ou mensagem religiosa no passo 1, ou escrever o que quer refletir no passo 2.</p>
     </div>
 
   </section>
 
   <section class="box">
-    <h2><span class="passo">4</span> Formato <span class="deslize">deslize →</span></h2>
+    <h2><span class="passo">4</span> Profundidade</h2>
+    <div class="seg3" id="profs">
+      <button type="button" data-q="natural"><span>💡</span>Natural</button>
+      <button type="button" data-q="profundo"><span>🧠</span>Profundo</button>
+      <button type="button" data-q="sabedoria"><span>🦉</span>Sabedoria máxima</button>
+    </div>
+    <p class="desc" id="descProf"></p>
+
+    <h2 style="margin-top:18px">Formato <span class="deslize">deslize →</span></h2>
     <div class="rolo" id="formatos"></div>
     <p class="desc" id="descFormato"></p>
 
@@ -205,7 +227,9 @@ footer{color:var(--mute);font-size:13px;margin-top:20px}
     <button type="button" id="fecharConfig">Fechar</button>
   </div>
   <p class="hint" id="testeConfig"></p>
-  <p class="hint">Versão 6.5</p>
+  <div class="row"><button type="button" id="testarModelos">🔍 Testar modelos disponíveis</button></div>
+  <div id="listaModelos" class="row"></div>
+  <p class="hint">Versão 7.0</p>
 </dialog>
 
 <dialog id="hist">
@@ -243,6 +267,8 @@ const PLATEIAS = {
     regra: 'Conversa formal (trabalho, empresa, cliente, seguradora, autoridade, órgão público). Linguagem correta e cordial, sem gíria, sem ironia, clara e objetiva, com pedido ou próximo passo concreto.' },
   juridico: { nome: 'Jurídico', estilo: 'juridico', tom: 'respeitoso',
     regra: 'Assunto jurídico ou de cobrança (banco, escola, seguradora, cliente, fornecedor, órgão público, notificação, reclamação). Objetivo: deixar registrado por escrito o direito do Neiron, de forma que sirva de prova depois, sem confissão e sem frase que possa ser usada contra ele. No campo "cuidado", lembre de conferir com o advogado dele antes de enviar documento formal.' },
+  biblia: { nome: 'Bíblia', estilo: 'sabedoria', tom: 'respeitoso',
+    regra: 'Assunto bíblico e de fé: responder mensagem religiosa, comentar um texto bíblico ou produzir reflexão e estudo. Respeito a católicos e evangélicos, sem polêmica entre igrejas. Profundidade com simplicidade, sem tom de sermão a não ser que o formato peça.' },
   amigos: { nome: 'Dia a dia', estilo: 'humor', tom: 'equilibrado',
     regra: 'Conversa do dia a dia com amigos e conhecidos. Natural, leve, bem-humorada. Curta.' }
 };
@@ -287,6 +313,10 @@ const ESTILOS = [
     regra: 'Regra de três (tríade): organize a resposta em exatamente três pontos curtos e ritmados, com estrutura repetida, crescendo em força até o terceiro.' },
   { id: 'caos', nome: 'Engenheiros do Caos', desc: 'Mostra como o outro lado usa raiva e algoritmo para manipular. Fecha indicando o conceito do livro.',
     regra: 'Use criticamente os conceitos do livro "Os Engenheiros do Caos" (Giuliano da Empoli): mostre como a mensagem do outro lado explora raiva, medo, polarização, algoritmo ou o líder como "palhaço"/espetáculo, e devolva com uma posição que puxe para os fatos e o interesse real do povo. No campo "tecnica", indique qual conceito do livro foi usado.' },
+  { id: 'sabedoria', nome: 'Sabedoria', desc: 'Discernimento, profundidade e síntese: entendida por uma pessoa simples e respeitada por uma instruída.',
+    regra: 'Modo Sabedoria: privilegie discernimento, profundidade, experiência humana, síntese e argumentação consistente. Aprenda com os princípios dos grandes pensadores, oradores e escritores sem copiar maneirismos e sem inventar citações. Clareza de quem domina o assunto, serenidade de quem sabe ouvir, firmeza de quem sabe argumentar. Pode ser curta: sabedoria não é comprimento.' },
+  { id: 'desafio', nome: 'Desafio construtivo', desc: 'Reconhece a dificuldade, mas convida à responsabilidade, à iniciativa e à superação.',
+    regra: 'Desafio construtivo: reconheça com sinceridade a dificuldade, e então convide à responsabilidade, à iniciativa e à superação, com um raciocínio original para esta situação (não use frases prontas). Não confunda cobrança legítima com falta de empatia: nem toda dificuldade se vence só com esforço individual; quando houver causa estrutural, reconheça-a e mostre o que está ao alcance de cada um.' },
   { id: 'juridico', nome: 'Advogado (parecer)', desc: 'Resposta de advogado de primeira linha: técnica, cita a lei certa, firme e sem brecha.',
     regra: 'Escreva como um advogado brasileiro de primeira linha atual: estrutura de mini-parecer em linguagem acessível (fato, direito, pedido). Aponte o fundamento legal aplicável (Constituição, Código Civil, Código de Defesa do Consumidor, CPC, CLT, Código de Trânsito, normas do Banco Central, Lei de Acesso à Informação etc.) SOMENTE citando artigos que você tem certeza que existem e dizem isso; na dúvida, cite só a lei, sem número de artigo. NUNCA invente jurisprudência, número de processo ou súmula. Tom técnico, seguro, sem ameaça vazia, com prazo e pedido claros. Sem juridiquês desnecessário.' },
 ];
@@ -323,13 +353,35 @@ function pintaModo() {
   document.querySelectorAll('#modos .chip').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.m === modo)));
   const rev = modo === 'revisar';
   $('tituloEntrada').innerHTML = '<span class="passo">1</span> ' + (rev ? 'Sua resposta <span style="font-weight:600;color:var(--mute);font-size:14px">(o que você escreveu ou gravou)</span>' : 'O que chegou <span style="font-weight:600;color:var(--mute);font-size:14px">(de outra pessoa)</span>');
-  $('quem').placeholder = rev ? 'Para quem é a sua resposta? (opcional)' : 'Quem fala no áudio/texto? Ex.: Naná';
+  $('quem').placeholder = rev ? 'Para quem é a sua resposta? (opcional)' : 'Quem fala no áudio ou texto (opcional)';
   $('chegou').placeholder = rev ? 'Cole ou compartilhe a resposta que VOCÊ escreveu ou gravou. O app avalia e melhora.' : 'Cole a mensagem, notícia, link do YouTube… ou compartilhe áudio, vídeo e print direto do WhatsApp.';
   $('rotPosicao').innerHTML = '<span class="passo">2</span> ' + (rev ? 'O que você está respondendo (opcional)' : 'O que você pensa');
   $('dicaPosicao').hidden = rev; $('rotDestino').hidden = rev; $('destino').hidden = rev;
-  $('posicao').placeholder = rev ? 'Cole aqui a mensagem da outra pessoa, se quiser que o app leve em conta.' : 'Ex.: Ela está errada, a obra foi feita com dinheiro do estado. Quero responder o João mostrando isso, com respeito. (Se deixar vazio, o app oferece 3 caminhos: concordar, discordar e meio-termo.)';
+  $('posicao').placeholder = rev ? 'Cole aqui a mensagem da outra pessoa, se quiser que o app leve em conta.' : 'Seu pensamento sobre o assunto…';
 }
 document.querySelectorAll('#modos .chip').forEach(b => b.addEventListener('click', () => { modo = b.dataset.m; ls.set('af_modo', modo); pintaModo(); }));
+
+/* ================= Bíblia ================= */
+const LIVROS = ['Gênesis','Êxodo','Levítico','Números','Deuteronômio','Josué','Juízes','Rute','1 Samuel','2 Samuel','1 Reis','2 Reis','1 Crônicas','2 Crônicas','Esdras','Neemias','Tobias','Judite','Ester','1 Macabeus','2 Macabeus','Jó','Salmos','Provérbios','Eclesiastes','Cântico dos Cânticos','Sabedoria','Eclesiástico (Sirácida)','Isaías','Jeremias','Lamentações','Baruc','Ezequiel','Daniel','Oseias','Joel','Amós','Abdias','Jonas','Miqueias','Naum','Habacuc','Sofonias','Ageu','Zacarias','Malaquias','Mateus','Marcos','Lucas','João','Atos dos Apóstolos','Romanos','1 Coríntios','2 Coríntios','Gálatas','Efésios','Filipenses','Colossenses','1 Tessalonicenses','2 Tessalonicenses','1 Timóteo','2 Timóteo','Tito','Filemom','Hebreus','Tiago','1 Pedro','2 Pedro','1 João','2 João','3 João','Judas','Apocalipse'];
+$('livros').innerHTML = LIVROS.map(l => `<option value="${l}"></option>`).join('');
+function refBiblica() {
+  if (plateia !== 'biblia') return '';
+  const l = $('bLivro').value.trim(), c = $('bCap').value.trim(), v = $('bVers').value.trim();
+  if (!l) return '';
+  return `${l}${c ? ' ' + c : ''}${c && v ? ':' + v : ''}`;
+}
+
+/* ================= Profundidade ================= */
+const PROFS = {
+  natural: 'Resposta espontânea, simples e bem pensada. Uma etapa só: mais rápida.',
+  profundo: 'Analisa primeiro (entende, critica, pesquisa) e depois escreve. Duas etapas: mais lenta, bem mais sólida.',
+  sabedoria: 'Análise crítica mais funda, conexões relevantes e síntese poderosa. Pensamento melhor, não texto maior.'
+};
+let profundidade = PROFS[ls.get('af_prof')] ? ls.get('af_prof') : 'profundo';
+function pintaProf() {
+  document.querySelectorAll('#profs button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.q === profundidade)));
+  $('descProf').textContent = PROFS[profundidade];
+}
 
 /* ================= Formatos ================= */
 const FORMATOS = [
@@ -351,7 +403,7 @@ const FORMATOS = [
 let formato = ls.get('af_formato') || 'whatsapp';
 if (!FORMATOS.some(f => f.id === formato)) formato = 'whatsapp';
 const regraFormato = () => FORMATOS.find(f => f.id === formato).regra;
-const IC_ESTILO = { auto: '✨', metafora: '🎭', formal: '📜', perguntas: '❓', contraste: '⚖️', historia: '📖', dados: '📊', humor: '😄', ditado: '🗣', absurdo: '🤯', concordo: '🤝', bordao: '💥', biblica: '✝️', ponte: '🌉', denuncia: '📢', analogia: '🔁', didatico: '🧑‍🏫', inversao: '🔄', tres: '3️⃣', caos: '🌀', juridico: '⚖' };
+const IC_ESTILO = { sabedoria: '🦉', desafio: '🧗', auto: '✨', metafora: '🎭', formal: '📜', perguntas: '❓', contraste: '⚖️', historia: '📖', dados: '📊', humor: '😄', ditado: '🗣', absurdo: '🤯', concordo: '🤝', bordao: '💥', biblica: '✝️', ponte: '🌉', denuncia: '📢', analogia: '🔁', didatico: '🧑‍🏫', inversao: '🔄', tres: '3️⃣', caos: '🌀', juridico: '⚖' };
 
 /* ================= Estado salvo ================= */
 let plateia = ls.get('af_plateia') || 'politica';
@@ -363,6 +415,7 @@ $('formatos').innerHTML = FORMATOS.map(f => `<button type="button" class="forte"
 $('estilos').innerHTML = ESTILOS.map(e => `<button type="button" data-e="${e.id}"><span>${IC_ESTILO[e.id] || '•'}</span>${esc(e.nome.replace(' (o app escolhe)', ''))}</button>`).join('');
 $('vozes').innerHTML = VOZES.map(v => `<button type="button" data-v="${v.id}"><span>${v.id ? '🗣' : '👤'}</span>${esc(v.id ? v.nome : 'Minha voz')}</button>`).join('');
 function pintaOpcoes() {
+  $('painelBiblia').hidden = plateia !== 'biblia';
   document.querySelectorAll('#plateias button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.p === plateia)));
   document.querySelectorAll('#tons .chip').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.v === tom)));
   document.querySelectorAll('#formatos button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.f === formato)));
@@ -376,6 +429,8 @@ document.querySelectorAll('#plateias button').forEach(b => b.addEventListener('c
   if (ls.get('af_estilo_manual') !== '1') estilo = plateia === 'juridico' ? 'juridico' : 'auto';
   ls.set('af_plateia', plateia); ls.set('af_tom5', tom); ls.set('af_estilo5', estilo); pintaOpcoes();
 }));
+document.querySelectorAll('#profs button').forEach(b => b.addEventListener('click', () => { profundidade = b.dataset.q; ls.set('af_prof', profundidade); pintaProf(); }));
+pintaProf();
 $('formatos').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; formato = b.dataset.f; ls.set('af_formato', formato); pintaOpcoes(); });
 $('estilos').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; estilo = b.dataset.e; ls.set('af_estilo5', estilo); ls.set('af_estilo_manual', estilo === 'auto' ? '' : '1'); pintaOpcoes(); });
 $('vozes').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; voz = b.dataset.v; ls.set('af_voz', voz); pintaOpcoes(); });
@@ -408,6 +463,19 @@ $('salvarConfig').addEventListener('click', async () => {
   ls.set('af_dna', $('dna').value.trim().slice(0, 4000));
   ls.set('af_auto2', $('auto').checked ? 'sim' : 'nao');
   checaChave();
+$('testarModelos').addEventListener('click', async () => {
+  const k = $('chave').value.trim() || chave(); const box = $('listaModelos');
+  if (!k) { box.textContent = 'Coloque a chave primeiro.'; return; }
+  box.textContent = 'Consultando o Google…';
+  try {
+    const r = await fetch('https://generativelanguage.googleapis.com/v1beta/models?pageSize=200', { headers: { 'x-goog-api-key': k } });
+    const d = await r.json();
+    if (!r.ok) throw new Error(d.error?.message || r.status);
+    const ms = (d.models || []).filter(m => (m.supportedGenerationMethods || []).includes('generateContent') && /gemini.*(flash|pro)/.test(m.name) && !/image|tts|audio|live|embedding/.test(m.name)).map(m => m.name.replace('models/', ''));
+    box.innerHTML = ms.length ? '<p class="hint" style="width:100%;margin:0">Disponíveis para a sua chave (toque para usar):</p>' + ms.map(m => `<button type="button" class="chip" data-mod="${esc(m)}" aria-pressed="${m === modelo()}">${esc(m)}</button>`).join('') : 'Nenhum modelo encontrado.';
+  } catch (e) { box.textContent = 'Erro: ' + e.message; }
+});
+$('listaModelos').addEventListener('click', e => { const m = e.target.dataset.mod; if (!m) return; $('modelo').value = m; ls.set('af_modelo', m); document.querySelectorAll('#listaModelos .chip').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.mod === m))); });
   $('testeConfig').textContent = 'Testando…';
   try { await gemini([{ text: 'Responda só: ok' }], false); $('testeConfig').textContent = 'Funcionando ✓'; setTimeout(() => $('config').close(), 700); }
   catch (e) { $('testeConfig').textContent = 'Erro: ' + e.message; }
@@ -415,10 +483,10 @@ $('salvarConfig').addEventListener('click', async () => {
 checaChave();
 
 /* ================= Gemini ================= */
-let ultimasFontes = [];
+let ultimasFontes = [], ultimaBusca = false;
 let avisoEspera = null; // função que mostra "esperando o Google…" na tela
 const dorme = ms => new Promise(r => setTimeout(r, ms));
-async function gemini(parts, json, temp, busca) {
+async function gemini(parts, json, temp, busca, pensar) {
   if (!chave()) { abrirConfig(); throw new Error('Coloque a chave do Gemini.'); }
   const tentar = [modelo(), ...RESERVAS.filter(m => m !== modelo())];
   let ultimoErro = null;
@@ -426,7 +494,7 @@ async function gemini(parts, json, temp, busca) {
     let espera = 0, limiteDia = 0, limites = 0;
     for (const m of tentar) {
       const cfg = json && !busca ? { responseMimeType: 'application/json', temperature: temp ?? 0.9 } : { temperature: temp ?? (json ? 0.9 : 0.2) };
-      if (/^gemini-2\.5-flash/.test(m)) cfg.thinkingConfig = { thinkingBudget: 0 };
+      if (/^gemini-2\.5-flash/.test(m)) cfg.thinkingConfig = { thinkingBudget: pensar ?? 0 };
       let r, d;
       try {
         r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${m}:generateContent`, {
@@ -440,6 +508,7 @@ async function gemini(parts, json, temp, busca) {
         if (m !== modelo() && !busca) ls.set('af_modelo', m);
         const txt = (d.candidates?.[0]?.content?.parts || []).map(p => p.text || '').join('');
         const gm = d.candidates?.[0]?.groundingMetadata;
+        ultimaBusca = !!(gm && ((gm.webSearchQueries || []).length || (gm.groundingChunks || []).length));
         ultimasFontes = (gm?.groundingChunks || []).map(c => c.web).filter(Boolean).map(w => ({ titulo: w.title || w.uri, url: w.uri })).filter((f, i, a) => a.findIndex(x => x.titulo === f.titulo) === i).slice(0, 6);
         if (!txt) { ultimoErro = 'resposta vazia'; continue; }
         return txt;
@@ -610,7 +679,7 @@ async function pegaCompartilhado() {
 
 /* ================= Rascunho ================= */
 // Abre sempre zerado. Só recupera o rascunho se o app fechou sem querer há menos de 10 minutos (ex.: o Android fechou ao trocar de app).
-const VERSAO = '6.5';
+const VERSAO = '7.0';
 const rascunhoRecente = Date.now() - (+ls.get('af_rasc_t') || 0) < 10 * 60 * 1000 && ls.get('af_versao') === VERSAO;
 if (rascunhoRecente) { chegou.value = ls.get('af_chegou'); posicao.value = ls.get('af_pos'); $('quem').value = ls.get('af_quem'); $('destino').value = ls.get('af_destino'); }
 else { ['af_chegou', 'af_pos', 'af_quem', 'af_destino'].forEach(k => ls.set(k, '')); }
@@ -619,7 +688,7 @@ function salvar() { ls.set('af_rasc_t', String(Date.now())); ls.set('af_chegou',
 $('quem').addEventListener('input', () => salvar()); $('destino').addEventListener('input', () => salvar());
 chegou.addEventListener('input', salvar); posicao.addEventListener('input', salvar);
 function limparTudo(manterOpiniao) {
-  chegou.value = ''; $('quem').value = ''; $('destino').value = ''; posicao.value = ''; anexos = []; desenhaAnexos(); saida.innerHTML = '';
+  chegou.value = ''; $('quem').value = ''; $('destino').value = ''; posicao.value = ''; $('bLivro').value = ''; $('bCap').value = ''; $('bVers').value = ''; anexos = []; desenhaAnexos(); saida.innerHTML = '';
   $('player').hidden = true; $('video').hidden = true; $('avisoLink').hidden = true; status(''); salvar(); mostraErro('');
 }
 $('limpar').addEventListener('click', () => limparTudo(false));
@@ -659,106 +728,155 @@ function blocoMaterial() {
   return `${chegou.value.trim() || '(o conteúdo está nos prints anexados)'}${txts ? '\n\nCONVERSA EXPORTADA DO WHATSAPP:\n' + txts : ''}${anexos.some(a => a.tipo === 'img') ? '\n\n(Há prints anexados; leia-os.)' : ''}`;
 }
 
-function montaPedido(opts = {}) {
-  const pl = PLATEIAS[plateia];
-  const e = ESTILOS.find(x => x.id === estilo);
-  const v = VOZES.find(x => x.id === voz);
+/* ================= Contexto comum ================= */
+function contexto() {
   const extra = posicao.value.trim();
   const quem = $('quem').value.trim();
   const autor = quem || 'uma outra pessoa (não identificada)';
   const destino = $('destino').value.trim();
-  const paraOutro = destino && (!quem || destino.toLowerCase() !== quem.toLowerCase());
+  const paraOutro = !!destino && (!quem || destino.toLowerCase() !== quem.toLowerCase());
   const alvo = destino || quem || 'essa pessoa';
-  const dna = ls.get('af_dna');
   const rev = modo === 'revisar';
-
+  const temMaterial = !!(chegou.value.trim() || anexos.length);
+  const ref = refBiblica();
   const cabeca = rev
-? `TAREFA: o usuário deste app, Neiron, escreveu (ou gravou) uma RESPOSTA e quer uma segunda opinião antes de mandar${quem ? ` para ${quem}` : ''}. Avalie e entregue versões melhores da resposta DELE.
+? `TAREFA: o usuário deste app, Neiron, escreveu (ou gravou) uma RESPOSTA e quer uma segunda opinião antes de mandar${quem ? ` para ${quem}` : ''}. Avalie e melhore a resposta DELE.
 
-TEXTO/ÁUDIO DO PRÓPRIO NEIRON (é a resposta dele, que você vai melhorar):
+TEXTO/ÁUDIO DO PRÓPRIO NEIRON (é a resposta dele):
 <<<
 ${blocoMaterial()}
 >>>
 ${extra ? `\nMENSAGEM QUE ELE ESTÁ RESPONDENDO (de outra pessoa):\n<<<\n${extra}\n>>>\n` : ''}
-Mantenha a posição e as ideias do Neiron. Corrija o que pode queimá-lo, deixe mais forte, mais claro e mais convincente para a maioria.`
-: `TAREFA: escrever a mensagem que o usuário deste app, Neiron, vai mandar ${paraOutro ? `para ${destino}, comentando o que ${autor} disse` : `para ${autor}, respondendo ao que ela(e) disse`}.
-
+Mantenha a posição e as ideias do Neiron. Corrija o que pode queimá-lo, deixe mais claro, mais sólido e mais convincente.`
+: `TAREFA: preparar a mensagem que o usuário deste app, Neiron, vai mandar ${temMaterial ? (paraOutro ? `para ${destino}, comentando o que ${autor} disse` : `para ${autor}, respondendo ao que foi dito`) : (destino ? `para ${destino}` : 'ao público que ele escolher')}.
+${temMaterial ? `
 MATERIAL — QUEM FALA: ${autor.toUpperCase()}
 <<<
 ${blocoMaterial()}
 >>>
 
-QUEM É QUEM (obrigatório, leia duas vezes):
-- Quem fala no material acima é ${autor}. O Neiron NÃO é o autor desse material e NÃO é a voz do áudio ou do vídeo. Mesmo que o assunto pareça ligado ao Neiron, o material continua sendo de ${autor}. Se o nome "Neiron" aparecer no material, é ${autor} falando com ele ou sobre ele.
+QUEM É QUEM (obrigatório):
+- Quem fala no material é ${autor}. O Neiron NÃO é o autor desse material e NÃO é a voz do áudio ou do vídeo, mesmo que o assunto pareça ligado a ele. Se o nome "Neiron" aparecer, é ${autor} falando com ele ou sobre ele.
 ${paraOutro
-  ? `- A mensagem do Neiron é PARA ${destino}, não para ${autor}. ${destino} recebeu ou encaminhou esse material e o Neiron vai comentar com ${destino}. Fale com ${destino} na segunda pessoa e trate ${autor} na terceira pessoa (por exemplo: "o que ${autor} disse…", "${autor} afirma que…", com o artigo certo para o nome). Nunca responda diretamente a ${autor}.`
-  : `- A mensagem do Neiron é PARA ${quem || 'essa pessoa'} (ou para o grupo onde ela falou), em primeira pessoa.`}
-${extra
+  ? `- A mensagem do Neiron é PARA ${destino}, não para ${autor}. Fale com ${destino} na segunda pessoa e trate ${autor} na terceira pessoa (com o artigo certo para o nome). Nunca responda diretamente a ${autor}.`
+  : `- A mensagem do Neiron é PARA ${quem || 'essa pessoa'} (ou para o grupo onde ela falou), em primeira pessoa.`}` : ''}
+${ref ? `\nREFERÊNCIA BÍBLICA ESCOLHIDA PELO NEIRON: ${ref}\n` : ''}${extra
   ? `
-O PENSAMENTO DO NEIRON (é a ESPINHA DORSAL da resposta; ele pode ter ditado por voz, então ignore erros de digitação e repetições):
+O PENSAMENTO DO NEIRON (ESPINHA DORSAL; pode ter sido ditado por voz, ignore erros de digitação):
 <<<
 ${extra}
 >>>
-COMO USAR O PENSAMENTO:
-- Siga exatamente a posição, o argumento e a intenção dele. Não mude o lado, não amacie se ele foi firme, não endureça se ele foi conciliador.
-- Se ele contou contexto (quem mandou para quem, quem é quem, o que aconteceu antes), obedeça esse contexto.
-- Seu trabalho é ORGANIZAR o raciocínio dele em forma de resposta ao que ${autor} disse e dar ROBUSTEZ: embasamento pesquisado, exemplos reais, dados, uma analogia nova, um pensador ou princípio jurídico que reforce o que ELE pensa.
-- Responda aos pontos que ${autor} levantou, usando o pensamento dele como base. Não acrescente opiniões que ele não deu.
-- SEJA CIRÚRGICO COM O PENSAMENTO DELE: antes de escrever, confira na pesquisa cada fato que ele afirmou. Se algum fato estiver errado ou exagerado, NÃO repita o erro nas versões (reescreva de forma correta e defensável) e aponte no diagnóstico. Procure contradições (entre frases dele, ou com coisas que ele mesmo já defendeu publicamente segundo o material), generalizações fáceis de derrubar e o contraponto mais forte que ${destino || autor} ou o grupo podem usar.`
-  : `
-O Neiron não escreveu o pensamento dele desta vez.`}`;
+- Preserve a posição, o argumento e a intenção dele. Não mude o lado, não amacie se ele foi firme, não endureça se ele foi conciliador. Se ele contou contexto (quem mandou para quem etc.), obedeça.
+- Não altere a posição dele em silêncio: se algo estiver errado, corrija o FATO na redação e explique no raio-x; a decisão final é dele.
+- Não acrescente opiniões que ele não deu.`
+  : `\nO Neiron não escreveu o pensamento dele desta vez.`}`;
+  return { extra, quem, autor, destino, paraOutro, alvo, rev, cabeca, ref, temMaterial };
+}
 
+const REGRA_PESQUISA = `PESQUISA (use a ferramenta de busca do Google com discernimento): pesquise quando precisar de fatos atuais, números, legislação, contexto histórico ou para verificar alegações feitas no material ou no pensamento do Neiron. Para questões morais, filosóficas, religiosas ou humanas, não force estatística. Prefira fontes oficiais, acadêmicas e jornais reconhecidos. Se a fonte não sustentar uma afirmação, ela NÃO vira fato. Nunca diga que pesquisou se não pesquisou.`;
+
+const REGRA_BIBLIA = `BÍBLIA: use como referência a TEB (Tradução Ecumênica da Bíblia), aceita por católicos e evangélicos, no cânon católico de 73 livros (ao citar livros deuterocanônicos, avise com naturalidade que fazem parte da Bíblia católica). Cite só passagens que existem, com referência exata (livro capítulo:versículo). Transcreva no máximo 1 ou 2 versículos; se não tiver certeza da redação exata da TEB, faça paráfrase fiel e diga que é paráfrase. Para doutrina católica, use o Catecismo da Igreja Católica com o número do parágrafo (§) só se tiver certeza. Distinga sempre: o que a Escritura diz, o contexto histórico, a interpretação doutrinária e a aplicação para hoje. Fale de modo que católicos e evangélicos se sintam respeitados.`;
+
+/* ---------- Etapa 1: análise (compreensão, crítica, aprofundamento, fatos) ---------- */
+function pedidoAnalise() {
+  const c = contexto();
+  const pl = PLATEIAS[plateia];
+  const sab = profundidade === 'sabedoria';
+  return `Você é o analista de um assessor de comunicação e conhecimento. Nesta etapa você NÃO escreve a resposta final: você pensa. Seja rigoroso, honesto e profundo.
+
+${c.cabeca}
+
+CONTEXTO DO GRUPO: ${pl.nome}. ${pl.regra}
+${plateia === 'biblia' ? '\n' + REGRA_BIBLIA + '\n' : ''}
+${ls.get('af_web') !== 'nao' ? REGRA_PESQUISA : 'Sem pesquisa na web nesta análise: use apenas conhecimento sólido e diga quando algo precisa ser verificado.'}
+
+FAÇA A ANÁLISE EM ETAPAS:
+1. COMPREENSÃO: o que foi dito (fala original), o que a pessoa realmente defende, que emoção transmite, que interesses estão em jogo, o que está implícito. Não misture a fala original com a interpretação.
+2. ANÁLISE CRÍTICA: consistência dos argumentos do outro lado (contradições, pressupostos, exageros, falácias, fatos não comprovados). Confronte também o pensamento do Neiron: onde ele pode estar errado, exagerado ou contraditório, e o contraponto mais forte que vão usar.
+3. APROFUNDAMENTO: ${sab ? 'busque as conexões mais reveladoras' : 'quando pertinente, relacione'} com história, filosofia, economia, direito, sociologia, psicologia, teologia, literatura ou experiência humana. Use para aprofundar o raciocínio, não para exibir erudição. Ideias de pensadores só se forem reais; citação literal só com certeza absoluta.
+4. FATOS: liste os fatos relevantes classificando cada um como "confirmado" (sustentado por fonte), "interpretacao", "opiniao" ou "hipotese".
+5. REAÇÃO HUMANA ADEQUADA: diga qual postura o contexto realmente pede (ex.: esperança diante do desânimo, coragem diante da dificuldade, firmeza diante da irresponsabilidade, empatia diante do sofrimento, prudência diante de acusações, serenidade diante de provocações, reconciliação diante de conflitos, questionamento diante de contradições, reconhecimento diante de boas atitudes). Não force motivação.
+6. ARGUMENTO CENTRAL: em 1 ou 2 frases, a ideia mais forte e verdadeira que a resposta do Neiron deve sustentar.
+
+Responda SOMENTE com JSON:
+{"compreensao":{"disse":"...","defende":"...","emocao":"...","interesses":"...","implicito":"..."},
+"critica_outro":["ponto fraco ou falácia no que foi dito"],
+"diagnostico":${c.extra || c.rev ? '{"acerto":"ponto mais forte do pensamento/texto do Neiron","erros":["fato errado, exagero ou frase que vai queimá-lo, com a correção; lista vazia se não houver"],"contradicao":"ou vazio","contraponto":"o argumento mais forte contra ele e como neutralizar","ajuste":"o que fazer para ser assertivo"}' : 'null'},
+"aprofundamento":[{"area":"Filosofia|História|Direito|Economia|Teologia|...","texto":"1 a 3 frases"}],
+"fatos":[{"status":"confirmado|interpretacao|opiniao|hipotese","texto":"..."}],
+"reacao":"postura humana adequada, em poucas palavras",
+"argumento_central":"...",
+${plateia === 'biblia' ? '"estudo_biblico":{"escritura":"o que o texto diz (versículo curto ou paráfrase fiel, com referência)","contexto":"contexto histórico e literário","doutrina":"leitura da Igreja (Catecismo §, se houver certeza) e, quando útil, a convergência com a leitura evangélica","aplicacao":"o que isso diz para a situação de hoje"},' : ''}
+"cuidado":"o ponto fraco que alguém pode usar contra a resposta"${plateia === 'politica' ? ',"conceito":"conceito de Os Engenheiros do Caos relevante aqui, em poucas palavras"' : ''}}`;
+}
+
+/* ---------- Etapa 2: redação (resposta principal + derivadas + revisão interna) ---------- */
+function pedidoRedacao(analise, opts = {}) {
+  const c = contexto();
+  const pl = PLATEIAS[plateia];
+  const e = ESTILOS.find(x => x.id === estilo);
+  const v = VOZES.find(x => x.id === voz);
+  const dna = ls.get('af_dna');
   const nomeFormato = FORMATOS.find(f => f.id === formato).nome;
-  const caminhos = rev
-    ? `Gere 3 versões melhoradas da resposta do Neiron: {"rotulo":"Sua versão melhorada"} (mesmo conteúdo, bem escrita), {"rotulo":"Mais forte"} (mais convincente) e {"rotulo":"Curta"} (até 280 caracteres).`
-    : extra
-      ? `Gere 3 versões do PENSAMENTO DO NEIRON organizado e embasado: {"rotulo":"Completa"} (o raciocínio inteiro, com embasamento e exemplo), {"rotulo":"Direta"} (os pontos mais fortes, enxuta) e {"rotulo":"Curta"} (até 280 caracteres).`
-      : `O Neiron ainda não definiu a opinião. Gere 3 caminhos para ele escolher, cada um capaz de agradar a maioria do grupo: {"rotulo":"Concordar com classe"} (concorda com ${quem || 'a pessoa'}, mas acrescenta algo que coloca o Neiron acima da conversa), {"rotulo":"Discordar com classe"} (discorda com firmeza e elegância, sem humilhar) e {"rotulo":"Meio-termo que une"} (encontra o ponto em comum e sai como o sensato do grupo).`;
+  const rotulos = c.rev
+    ? `"Sua versão melhorada", "Mais forte", "Curta"`
+    : (c.extra || !c.temMaterial) ? `"Completa", "Direta", "Curta"` : `"Concordar com classe", "Discordar com classe", "Meio-termo que une"`;
+  const semPensamento = !c.rev && !c.extra && c.temMaterial;
+  return `Você é o redator de um assessor de comunicação e conhecimento. A análise já foi feita (abaixo). Agora escreva com excelência.
 
-  const termo = rev
-    ? `TERMÔMETRO: avalie friamente a resposta ORIGINAL do Neiron. "veredito" = "responder" (pode mandar, está boa), "privado" (melhor mandar no privado) ou "nao" (melhor não mandar, pode queimar). "motivo" em 1 frase dizendo o principal acerto ou erro do texto dele. "maioria" em 1 frase: como a maioria do grupo vai receber.`
-    : `TERMÔMETRO: avalie friamente se vale a pena o Neiron mandar essa mensagem para ${alvo}. "veredito" = "responder", "privado" (melhor falar no privado) ou "nao" (melhor não responder ou só reagir). "motivo" em 1 frase. "maioria" em 1 frase: como a maioria silenciosa do grupo está vendo o que ${quem || 'a pessoa'} disse.`;
+${c.cabeca}
 
-  const entendi = rev ? 'O que o texto do Neiron passa para quem lê, em 1 frase' : `Comece com '${quem || 'A pessoa'} está dizendo que' e resuma em 1 frase o que ${quem || 'ela'} disse${paraOutro ? `; depois diga 'Resposta para ${destino}.'` : ''}`;
-
-  return `Você é o redator e estrategista de comunicação pessoal do Neiron, o usuário deste app. Missão: fazer o Neiron sair por cima em qualquer conversa, com argumento que agrade a maioria de quem lê, concordando ou não.
-
-${cabeca}
+ANÁLISE JÁ FEITA (use como base; não repita as listas, transforme em argumento):
+${JSON.stringify(analise)}
 
 ------------------------------
 ${perfil()}
-${dna ? `\nJEITO DE ESCREVER DO NEIRON (imite vocabulário, ritmo, saudações e pontuação destes exemplos, sem copiar frases):\n"""${dna}"""\n` : ''}
-GRUPO / PLATEIA: ${pl.nome}. ${pl.regra}
+${dna ? `\nMEU JEITO DE ESCREVER (referência principal de linguagem, ritmo, vocabulário e naturalidade; não copie frases):\n"""${dna}"""\n` : ''}
+GRUPO: ${pl.nome}. ${pl.regra}
+${plateia === 'biblia' ? REGRA_BIBLIA + '\n' : ''}ESTILO: ${e.nome}. ${e.regra}
+${v && v.id ? `NA VOZ DE: ${v.regra} Imite o modo de pensar, não maneirismos. Não confunda com o jeito de escrever do Neiron: a voz empresta o raciocínio, a linguagem continua dele. Sem frases inventadas atribuídas a essa pessoa.\n` : ''}TOM: ${TONS[tom]}
+LINGUAGEM: ${(ls.get('af_nivel') || 'culto') === 'popular' ? 'simples, do povo.' : 'culta e precisa, mas clara: compreendida por uma pessoa simples e respeitada por uma pessoa instruída.'}
+PROFUNDIDADE: ${profundidade === 'sabedoria' ? 'Sabedoria máxima: discernimento, conexões relevantes e síntese poderosa. Pensamento melhor, não texto maior.' : 'Profundo: argumento desenvolvido, contextualizado e reflexivo, sem encher.'}
+REAÇÃO HUMANA PEDIDA: ${analise.reacao || 'a que o assunto pedir'}. O sentimento nasce do assunto, nunca de frases prontas. Nada de mensagem motivacional automática.
 
-ESTILO: ${e.nome}. ${e.regra}
-${v && v.id ? `\nNA VOZ DE: ${v.regra} Imite o ESTILO e o modo de pensar, em português simples. NÃO invente frases e não atribua a essa pessoa nada que ela não disse. Só cite uma frase real e muito conhecida se tiver certeza absoluta da autoria; na dúvida, não cite.\n` : ''}
-TOM: ${TONS[tom]}
+COMO ESCREVER:
+1. Primeiro construa, internamente, UMA RESPOSTA PRINCIPAL de excelência a partir do argumento central: começo natural, desenvolvimento coerente, conclusão que deixa uma reflexão, uma orientação ou uma pergunta útil. Use só as técnicas que acrescentam clareza e força (analogia, contraste, exemplo concreto, pergunta retórica, narrativa, causa e consequência, princípio moral, evidência verificável).
+2. Depois derive as 3 versões ${rotulos} ${semPensamento ? '(cada caminho com seu próprio argumento central, todos sólidos)' : 'DO MESMO argumento central, preservando essência, naturalidade e força'}. Não produza textos genéricos para preencher espaço.
+3. Formato: ${regraFormato()} Todas as versões no formato ${nomeFormato.toUpperCase()} ("Direta" e "Curta" são versões menores do mesmo formato; a "Curta" tem até 280 caracteres, exceto em Perguntas e respostas).
+4. Escrita humana: pessoa real, com experiência e responsabilidade, em primeira pessoa. Sem markdown, sem travessão longo, sem ponto e vírgula, sem clichês de redação ("Além disso", "Em suma", "Vale ressaltar", "É importante destacar", "Nesse sentido", "Em conclusão"), sem elogio automático, sem encerramento previsível. Fontes citadas de forma natural no meio da frase, nunca com link.
+5. Fatos: use como fato só o que está "confirmado" na análise. Interpretação e opinião aparecem como tal. Nada de número, citação ou versículo que não exista.
+6. REVISÃO INTERNA antes de entregar (não mostre notas): a resposta enfrenta o argumento recebido? É fiel ao pensamento do Neiron? Há afirmação sem comprovação? Há profundidade ou só palavras bonitas? Soa como pessoa escrevendo? O tom emocional é adequado? Há frase desnecessária? A conclusão é significativa? Avalie de 0 a 10 em fidelidade, clareza, profundidade, originalidade, naturalidade, coerência, adequação emocional, precisão factual e força da conclusão; reescreva o que ficar abaixo de 8. Se impacto emocional e verdade entrarem em conflito, fique com a verdade.${opts.outra ? `\n7. Faça versões NOVAS e diferentes destas já usadas: ${opts.outra}` : ''}
 
-${ls.get('af_web') !== 'nao' ? `PESQUISA: antes de escrever, pesquise na web (Google) o assunto da conversa: fatos atuais, números oficiais, notícias recentes, o que diz a lei e o que especialistas dizem. Use o que encontrar para dar SOLIDEZ às respostas. Prefira fontes oficiais e jornais conhecidos. Se a pesquisa não confirmar algo, não afirme.
-
-` : ''}EMBASAMENTO: além das respostas, monte um kit de munição sobre o assunto, com 3 a 5 itens variados escolhidos entre: "Fato do momento" (dado ou notícia atual verificada), "Ângulo jurídico" (o que a lei diz, só se for pertinente e real), "Analogia" (comparação nova ligada ao assunto), "Pensador" (um pensador, jurista, economista ou líder que tem uma ideia útil aqui, inclusive um CONTRAPONTO à ideia do outro lado; só ideia real, citação só se tiver certeza), "Contra-argumento" (o que o outro lado pode rebater e como responder).
-
-NÍVEL: ${(ls.get('af_nivel') || 'culto') === 'popular' ? 'Popular: linguagem simples do povo, sem termos técnicos, mas com os fatos certos.' : 'Culto. O grupo tem gente que lê e estuda: a resposta tem que mostrar conhecimento de verdade, nunca opinião solta. Ancore cada versão em pelo menos um elemento concreto e verificável: programa, lei, dado oficial (IBGE, IPEA, Banco Central, TCU, ministérios), estudo acadêmico, autor ou conceito de ciência política, economia, direito ou filosofia. Nomeie a fonte no texto de forma natural ("segundo o IBGE…", "como mostra o estudo do Ipea…"). Vocabulário preciso, mas frases claras e curtas: sabedoria, não pedantismo.'}
-
-DEFESA DE UM LADO: se a opinião do Neiron defende ou critica uma pessoa, governo, partido ou política pública, pesquise e use os exemplos concretos e reais a favor da posição DELE (programas, leis, obras, indicadores, resultados com números e período). Trate qualquer lado com o mesmo rigor: se ele defende Fulano, mostre onde Fulano acertou de verdade; se critica, mostre o que de fato deu errado. Não invente números nem misture governos. Seja honesto no campo "cuidado" sobre o ponto fraco do lado defendido. Se não houver opinião, cada caminho também precisa de fato concreto.
-
-VARIEDADE: cada resposta tem que nascer do assunto específico da conversa. Não use imagens prontas, não repita comparações. ${ultimasImagens() ? `Evite estas imagens e técnicas usadas recentemente: ${ultimasImagens()}.` : ''}
-
-REGRAS DE OURO:
-- Nunca invente fatos, números, nomes, datas, citações ou acusações. Use o material e o que a pesquisa confirmar. Se faltar dado, argumente com lógica e valores.
-- Citações e versículos só se forem reais e com autor/referência corretos.
-- Sem ataque pessoal, xingamento, preconceito ou ofensa à família de ninguém. A crítica mira a prática, não a pessoa.
-- Português do Brasil, frases curtas, pronto para publicar no formato pedido abaixo.
-- ${regraFormato()}
-- ESCRITA HUMANA (vale para qualquer formato): texto de uma pessoa de verdade, com experiência, ética e responsabilidade, em primeira pessoa. Sem markdown, sem asterisco duplo, sem travessão longo (—), sem ponto e vírgula, sem aspas curvas. Se quiser destacar UMA palavra, use o negrito do WhatsApp com um asterisco de cada lado (*assim*), no máximo uma vez. Proibido: "Prezado", "Caro interlocutor", "Em suma", "Além disso", "Vale ressaltar", "É importante destacar", "Nesse sentido", "Por fim", "Em conclusão", "Espero ter ajudado". Use conectivos de conversa real quando couber ("Olha", "Veja bem", "Pois é", "Agora, ", "Só que"), sem exagerar. Fontes são citadas no meio da frase, do jeito que a gente fala ("o IBGE mostrou que…"), nunca com link ou referência formal. Não termine com pergunta genérica nem com resumo. Varie o começo: não comece todas as versões pelo nome da pessoa.${opts.outra ? `\n- Faça versões NOVAS e diferentes destas já usadas: ${opts.outra}` : ''}
-
-${caminhos}
-Todas as versões no FORMATO ${nomeFormato.toUpperCase()} descrito acima ("Curta" e "Direta" = versões menores do mesmo formato).
-
-${termo}
+TERMÔMETRO: ${c.rev ? 'avalie a resposta ORIGINAL do Neiron' : `avalie se vale a pena o Neiron mandar isso para ${c.alvo}`}: "responder", "privado" ou "nao", com motivo em 1 frase e como a maioria vê, em 1 frase.
 
 Responda SOMENTE com JSON:
-{"entendi":"${entendi}","termometro":{"veredito":"responder|privado|nao","motivo":"...","maioria":"..."},"versoes":[{"rotulo":"...","tecnica":"técnica usada em poucas palavras","texto":"..."},{"rotulo":"...","tecnica":"...","texto":"..."},{"rotulo":"...","tecnica":"...","texto":"..."}],"diagnostico":${extra && !rev ? '{"acerto":"1 frase: o ponto mais forte do pensamento dele","erros":["fato errado, exagero ou frase que vai queimá-lo, com a correção; deixe a lista vazia se não houver"],"contradicao":"contradição ou incoerência que podem apontar, ou vazio","contraponto":"o argumento mais forte que vão usar contra ele e como neutralizar","ajuste":"1 frase: o que fazer para ser mais assertivo"}' : (rev ? '{"acerto":"o que está bom no texto dele","erros":["frases que podem queimá-lo e por quê"],"contradicao":"...","contraponto":"o que vão rebater","ajuste":"o principal ajuste"}' : 'null')},"embasamento":[{"tipo":"Fato do momento|Ângulo jurídico|Analogia|Pensador|Contra-argumento","texto":"1 a 3 frases"}],"cuidado":"1 frase: o ponto fraco que alguém pode usar contra essas respostas","conceito":"${plateia === 'politica' ? 'conceito de Os Engenheiros do Caos usado ou relevante, em poucas palavras' : ''}"}`;
+{"entendi":"${c.rev ? 'o que o texto do Neiron passa, em 1 frase' : (c.temMaterial ? `${c.quem || 'A pessoa'} está dizendo que…${c.paraOutro ? ` Resposta para ${c.destino}.` : ''}` : 'o tema tratado, em 1 frase')}","termometro":{"veredito":"responder|privado|nao","motivo":"...","maioria":"..."},"versoes":[{"rotulo":"...","tecnica":"técnica usada em poucas palavras","texto":"..."},{"rotulo":"...","tecnica":"...","texto":"..."},{"rotulo":"...","tecnica":"...","texto":"..."}]}`;
+}
+
+/* ---------- Natural: uma etapa só (rápido) ---------- */
+function pedidoNatural(opts = {}) {
+  const c = contexto();
+  const pl = PLATEIAS[plateia];
+  const e = ESTILOS.find(x => x.id === estilo);
+  const v = VOZES.find(x => x.id === voz);
+  const dna = ls.get('af_dna');
+  const nomeFormato = FORMATOS.find(f => f.id === formato).nome;
+  const rotulos = c.rev ? `"Sua versão melhorada", "Mais forte", "Curta"` : (c.extra || !c.temMaterial) ? `"Completa", "Direta", "Curta"` : `"Concordar com classe", "Discordar com classe", "Meio-termo que une"`;
+  return `Você é o assessor de comunicação do Neiron. Resposta natural: espontânea, simples e bem pensada.
+
+${c.cabeca}
+
+${perfil()}
+${dna ? `\nMEU JEITO DE ESCREVER (referência de linguagem; não copie frases):\n"""${dna}"""\n` : ''}
+GRUPO: ${pl.nome}. ${pl.regra}
+${plateia === 'biblia' ? REGRA_BIBLIA + '\n' : ''}ESTILO: ${e.nome}. ${e.regra}
+${v && v.id ? `NA VOZ DE: ${v.regra} Imite o modo de pensar, sem inventar frases dessa pessoa.\n` : ''}TOM: ${TONS[tom]}
+${ls.get('af_web') !== 'nao' ? REGRA_PESQUISA : ''}
+
+Pense primeiro no argumento central, escreva a resposta principal e derive dela as versões ${rotulos}. Formato: ${regraFormato()} Todas em ${nomeFormato.toUpperCase()}. Escrita humana, em primeira pessoa, sem markdown, sem travessão longo, sem clichês de redação. Nunca invente fatos, números, citações ou versículos. Se o pensamento do Neiron tiver fato errado, corrija na redação e aponte no diagnóstico.${opts.outra ? ` Faça versões novas, diferentes destas: ${opts.outra}.` : ''}
+
+Responda SOMENTE com JSON:
+{"entendi":"1 frase","termometro":{"veredito":"responder|privado|nao","motivo":"...","maioria":"..."},"versoes":[{"rotulo":"...","tecnica":"...","texto":"..."},{"rotulo":"...","tecnica":"...","texto":"..."},{"rotulo":"...","tecnica":"...","texto":"..."}],"diagnostico":${c.extra || c.rev ? '{"acerto":"...","erros":["..."],"contradicao":"...","contraponto":"...","ajuste":"..."}' : 'null'},"fatos":[{"status":"confirmado|interpretacao|opiniao|hipotese","texto":"..."}],${plateia === 'biblia' ? '"estudo_biblico":{"escritura":"...","contexto":"...","doutrina":"...","aplicacao":"..."},' : ''}"cuidado":"1 frase"}`;
 }
 
 /* ================= Limpeza: cara de WhatsApp ================= */
@@ -777,13 +895,16 @@ function humaniza(t) {
     .replace(/\n{3,}/g, '\n\n')
     .trim();
 }
+const lerJSON = txt => JSON.parse(String(txt).slice(String(txt).indexOf('{'), String(txt).lastIndexOf('}') + 1));
 
 /* ================= Gerar ================= */
-function esqueleto() { saida.innerHTML = '<p class="wait" style="margin-top:14px">Pensando na melhor saída…</p><div class="skel"></div><div class="skel"></div><div class="skel"></div>'; }
+function esqueleto(msg) { saida.innerHTML = `<p class="wait" style="margin-top:14px">${msg || 'Pensando na melhor saída…'}</p><div class="skel"></div><div class="skel"></div><div class="skel"></div>`; }
+const PENSAR = { natural: 0, profundo: 2048, sabedoria: 8192 }; // usado só nos modelos 2.5 (os 3.x pensam sozinhos)
 
 async function roda(outra) {
   mostraErro('');
-  if (!chegou.value.trim() && !anexos.length) return mostraErro('Compartilhe um áudio ou vídeo, cole a mensagem ou anexe um print.');
+  if (!chegou.value.trim() && !anexos.length && !refBiblica() && !(modo !== 'revisar' && posicao.value.trim()))
+    return mostraErro('Compartilhe um áudio ou vídeo, cole a mensagem, escreva seu pensamento ou escolha um texto bíblico.');
   gerar.disabled = true;
   const pendentes = anexos.filter(a => (a.tipo === 'audio' || a.tipo === 'video') && !a.transcrito);
   for (const a of pendentes) {
@@ -791,19 +912,48 @@ async function roda(outra) {
     const ok = await transcreve(a.blob, a.tipo, a);
     if (!ok) { gerar.disabled = false; gerar.textContent = 'Gerar resposta'; mostraErro('Ainda não consegui ouvir o ' + (a.tipo === 'video' ? 'vídeo' : 'áudio') + '. Não vou responder sem ouvir. Toque em Gerar de novo em instantes.'); return; }
   }
-  gerar.textContent = 'Escrevendo…'; esqueleto();
+  gerar.textContent = 'Pensando…';
+  const busca = ls.get('af_web') !== 'nao';
+  esqueleto(profundidade === 'natural' ? 'Escrevendo…' : (busca ? 'Etapa 1 de 2: entendendo, pesquisando e analisando…' : 'Etapa 1 de 2: entendendo e analisando…'));
   avisoEspera = t => { const w = saida.querySelector('.wait'); if (w) w.textContent = t; };
   saida.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  const imagens = async () => { const ps = []; for (const a of anexos.filter(a => a.tipo === 'img')) ps.push({ inline_data: { mime_type: a.blob.type || 'image/jpeg', data: await paraBase64(a.blob) } }); return ps; };
+  const outraTxt = outra ? (ultimo?.versoes || []).map(v => v.tecnica).join('; ') : '';
   try {
-    const parts = [{ text: montaPedido({ outra: outra ? (ultimo?.versoes || []).map(v => v.tecnica).join('; ') : '' }) }];
-    for (const a of anexos.filter(a => a.tipo === 'img')) parts.push({ inline_data: { mime_type: a.blob.type || 'image/jpeg', data: await paraBase64(a.blob) } });
-    const busca = ls.get('af_web') !== 'nao';
-    if (busca) $('saida').querySelector('.wait').textContent = 'Pesquisando o assunto na web e escrevendo…';
-    const txt = await gemini(parts, true, undefined, busca);
-    const r = JSON.parse(txt.slice(txt.indexOf('{'), txt.lastIndexOf('}') + 1));
-    r.fontes = busca ? ultimasFontes : [];
+    let r, fontes = [], pesquisou = false;
+    if (profundidade === 'natural') {
+      const txt = await gemini([{ text: pedidoNatural({ outra: outraTxt }) }, ...await imagens()], true, 0.8, busca, PENSAR.natural);
+      fontes = busca ? ultimasFontes : []; pesquisou = busca && ultimaBusca;
+      r = lerJSON(txt);
+    } else {
+      let analise;
+      if (outra && ultimo?.analise) analise = ultimo.analise;
+      else {
+        const t1 = await gemini([{ text: pedidoAnalise() }, ...await imagens()], true, 0.3, busca, 1024);
+        fontes = busca ? ultimasFontes : []; pesquisou = busca && ultimaBusca;
+        analise = lerJSON(t1);
+      }
+      if (outra && ultimo?.analise) { fontes = ultimo.fontes || []; pesquisou = !!ultimo.pesquisou; }
+      avisoEspera('Etapa 2 de 2: escrevendo e revisando…');
+      gerar.textContent = 'Escrevendo…';
+      const t2 = await gemini([{ text: pedidoRedacao(analise, { outra: outraTxt }) }], true, 0.8, false, PENSAR[profundidade]);
+      const red = lerJSON(t2);
+      r = Object.assign({}, red, {
+        analise,
+        diagnostico: analise.diagnostico || null,
+        compreensao: analise.compreensao || null,
+        aprofundamento: analise.aprofundamento || [],
+        fatos: analise.fatos || [],
+        reacao: analise.reacao || '',
+        estudo_biblico: analise.estudo_biblico || null,
+        cuidado: analise.cuidado || red.cuidado,
+        conceito: analise.conceito || ''
+      });
+    }
+    r.fontes = fontes; r.pesquisou = pesquisou;
     (r.versoes || []).forEach(v => { v.texto = humaniza(v.texto); });
-    r.id = Date.now(); r.plateia = plateia; r.quem = $('quem').value.trim(); r.destino = $('destino').value.trim(); r.modo = modo; r.formato = formato; r.entrada = chegou.value.trim().slice(0, 300); r.fav = false;
+    r.id = Date.now(); r.plateia = plateia; r.quem = $('quem').value.trim(); r.destino = $('destino').value.trim(); r.modo = modo; r.formato = formato; r.profundidade = profundidade;
+    r.entrada = (chegou.value.trim() || refBiblica() || posicao.value.trim()).slice(0, 300); r.fav = false;
     ultimo = r; guardaHist(r); desenha(r);
   } catch (e) {
     saida.innerHTML = '';
@@ -811,6 +961,7 @@ async function roda(outra) {
   } finally { gerar.disabled = false; gerar.textContent = 'Gerar resposta'; }
 }
 gerar.addEventListener('click', () => roda(false));
+
 
 function desenhaDiag(d) {
   const erros = (Array.isArray(d.erros) ? d.erros : [d.erros]).filter(x => x && String(x).trim());
@@ -823,12 +974,40 @@ function desenhaDiag(d) {
     ${lin('🎯', 'Para ser assertivo', d.ajuste)}
   </div>`;
 }
+const ST = { confirmado: ['✔', 'Confirmado'], interpretacao: ['≈', 'Interpretação'], opiniao: ['💬', 'Opinião'], hipotese: ['?', 'Hipótese'] };
+function desenhaCompreensao(r) {
+  const c = r.compreensao || {};
+  const lin = (t, v) => v && String(v).trim() ? `<p class="bitem"><b>${t}:</b> ${esc(v)}</p>` : '';
+  return `<details class="card mini"><summary><b>O que está em jogo</b>${r.reacao ? ` · <span class="tec">postura: ${esc(r.reacao)}</span>` : ''}</summary>
+    ${lin('O que foi dito', c.disse)}${lin('O que defende', c.defende)}${lin('Emoção', c.emocao)}${lin('Interesses', c.interesses)}${lin('Implícito', c.implicito)}
+    ${(r.analise?.critica_outro || []).length ? `<p class="bitem"><b>Pontos fracos do outro lado:</b></p>${r.analise.critica_outro.map(x => `<p class="bitem" style="padding-left:14px">• ${esc(x)}</p>`).join('')}` : ''}
+    ${r.analise?.argumento_central ? lin('Argumento central da sua resposta', r.analise.argumento_central) : ''}
+  </details>`;
+}
+function desenhaBiblia(b) {
+  const lin = (ic, t, v) => v && String(v).trim() ? `<p class="bitem"><b>${ic} ${t}:</b> ${esc(v)}</p>` : '';
+  return `<div class="card base"><div class="top"><h3>Estudo bíblico</h3></div>
+    ${lin('📜', 'Escritura', b.escritura)}${lin('🏛', 'Contexto histórico', b.contexto)}${lin('⛪', 'Doutrina', b.doutrina)}${lin('🌱', 'Aplicação hoje', b.aplicacao)}
+    <p class="tec" style="margin-top:8px">Referência: TEB. Confira o versículo na sua Bíblia antes de publicar.</p></div>`;
+}
+function desenhaBase(r) {
+  const ap = r.aprofundamento || [], fa = r.fatos || [];
+  const pesq = r.pesquisou ? `🔎 Pesquisa feita na web${(r.fontes || []).length ? ` · ${r.fontes.length} fonte${r.fontes.length > 1 ? 's' : ''}` : ''}` : (ls.get('af_web') !== 'nao' ? '🔎 O Google não precisou pesquisar nesta resposta' : 'Pesquisa na web desligada');
+  if (!ap.length && !fa.length && !(r.fontes || []).length) return r.aprofundamento ? `<p class="tec">${pesq}</p>` : '';
+  return `<div class="card base"><div class="top"><h3>Embasamento</h3></div>
+    ${ap.map(b => `<p class="bitem"><b>${esc(b.area || b.tipo)}:</b> ${esc(b.texto)}</p>`).join('')}
+    ${fa.length ? `<p class="tec" style="margin-top:10px">Fatos:</p>${fa.map(f => { const s = ST[f.status] || ST.hipotese; return `<p class="bitem"><span class="selo s-${esc(f.status)}">${s[0]} ${s[1]}</span> ${esc(f.texto)}</p>`; }).join('')}` : ''}
+    <p class="tec" style="margin-top:10px">${pesq}</p>
+    ${(r.fontes || []).map(f => `<p class="bitem"><a href="${esc(f.url)}" target="_blank" rel="noopener">${esc(f.titulo)}</a></p>`).join('')}
+  </div>`;
+}
 const VERED = { responder: ['v-responder', '✅ Vale responder'], privado: ['v-privado', '🤫 Melhor no privado'], nao: ['v-nao', '✋ Melhor não responder'] };
 function desenha(r) {
   const t = r.termometro || {}; const [cls, tit] = VERED[t.veredito] || VERED.responder;
   saida.innerHTML =
     `<div class="termo ${cls}"><b>${tit}</b><p>${esc(t.motivo)}</p>${t.maioria ? `<small>A maioria vê assim: ${esc(t.maioria)}</small>` : ''}</div>` +
     (r.entendi ? `<p class="hint">${esc(r.entendi)}</p>` : '') +
+    (r.compreensao ? desenhaCompreensao(r) : '') +
     (r.diagnostico ? desenhaDiag(r.diagnostico) : '') +
     (r.versoes || []).map((v, i) => `<div class="card" data-i="${i}">
       <div class="top"><h3>${esc(v.rotulo)}</h3><button type="button" class="estrela" data-acao="fav" aria-label="Favoritar">${v.fav ? '⭐' : '☆'}</button></div>
@@ -837,7 +1016,9 @@ function desenha(r) {
       <div class="row"><button type="button" data-acao="copiar">Copiar</button>${navigator.share ? '<button type="button" data-acao="share">Compartilhar</button>' : ''}<a class="btn wa" data-acao="wa" href="https://wa.me/?text=${encodeURIComponent(v.texto)}" target="_blank" rel="noopener">WhatsApp</a></div>
       <div class="row ajustes"><button type="button" data-aj="curta">Mais curta</button><button type="button" data-aj="firme">Mais firme</button><button type="button" data-aj="educada">Mais educada</button><button type="button" data-aj="humor">Com humor</button><button type="button" data-aj="voz">Mais meu jeito</button></div>
     </div>`).join('') +
-    (Array.isArray(r.embasamento) && r.embasamento.length ? `<div class="card base"><div class="top"><h3>Embasamento</h3></div>${r.embasamento.map(b => `<p class="bitem"><b>${esc(b.tipo)}:</b> ${esc(b.texto)}</p>`).join('')}${(r.fontes || []).length ? `<p class="tec" style="margin-top:10px">Fontes:</p>${r.fontes.map(f => `<p class="bitem"><a href="${esc(f.url)}" target="_blank" rel="noopener">${esc(f.titulo)}</a></p>`).join('')}` : ''}</div>` : '') +
+    (r.estudo_biblico ? desenhaBiblia(r.estudo_biblico) : '') +
+    desenhaBase(r) +
+    (Array.isArray(r.embasamento) && r.embasamento.length && !r.aprofundamento ? `<div class="card base"><div class="top"><h3>Embasamento</h3></div>${r.embasamento.map(b => `<p class="bitem"><b>${esc(b.tipo)}:</b> ${esc(b.texto)}</p>`).join('')}${(r.fontes || []).length ? `<p class="tec" style="margin-top:10px">Fontes:</p>${r.fontes.map(f => `<p class="bitem"><a href="${esc(f.url)}" target="_blank" rel="noopener">${esc(f.titulo)}</a></p>`).join('')}` : ''}</div>` : '') +
     (r.cuidado ? `<div class="note cuidado"><b>Cuidado:</b> ${esc(r.cuidado)}</div>` : '') +
     (r.conceito ? `<div class="note cuidado" style="border-color:var(--ink)"><b>Engenheiros do Caos:</b> ${esc(r.conceito)}</div>` : '') +
     `<div class="row"><button type="button" id="outra">↻ Outras versões</button></div>`;
@@ -879,7 +1060,7 @@ saida.addEventListener('click', async e => {
 function lerHist() { try { return JSON.parse(ls.get('af_hist') || '[]'); } catch (e) { return []; } }
 function guardaHist(r) {
   let h = lerHist().filter(x => x.id !== r.id);
-  h.unshift({ id: r.id, plateia: r.plateia, quem: r.quem, destino: r.destino, modo: r.modo, formato: r.formato, diagnostico: r.diagnostico, embasamento: r.embasamento, fontes: r.fontes, entrada: r.entrada, entendi: r.entendi, versoes: r.versoes, termometro: r.termometro, cuidado: r.cuidado, conceito: r.conceito });
+  h.unshift({ id: r.id, plateia: r.plateia, quem: r.quem, destino: r.destino, modo: r.modo, formato: r.formato, profundidade: r.profundidade, compreensao: r.compreensao, aprofundamento: r.aprofundamento, fatos: r.fatos, reacao: r.reacao, estudo_biblico: r.estudo_biblico, pesquisou: r.pesquisou, analise: r.analise, diagnostico: r.diagnostico, embasamento: r.embasamento, fontes: r.fontes, entrada: r.entrada, entendi: r.entendi, versoes: r.versoes, termometro: r.termometro, cuidado: r.cuidado, conceito: r.conceito });
   const favs = h.filter(x => x.versoes?.some(v => v.fav)), resto = h.filter(x => !x.versoes?.some(v => v.fav)).slice(0, 40);
   h = [...favs, ...resto].sort((a, b) => b.id - a.id);
   ls.set('af_hist', JSON.stringify(h));
